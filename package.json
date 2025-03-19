@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/albatros/schema.json",
+  "name": "ru.topomatic.example",
+  "displayName": "Тестовое приложение Topomatic 360",
+  "description": "Тестовое приложение демонстрирует возможность создания пользовательских плагинов, позволяющих расширять базовую функциональность Topomatic 360 за счёт новых функций",
+  "private": true,
+  "version": "0.0.1",
+  "main": "src/main.ts",
+  "author": {
+    "name": "ООО НПФ \"Топоматик\"",
+    "email": "support@topomatic.ru",
+    "url": "https://topomatic.ru"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mzaitsev-code/albatros-example.git"
+  },
+  "icon": "favicon",
+  "apx": false,
+  "scripts": {
+    "serve": "albatros-cli serve",
+    "build": "albatros-cli build"
+  },
+  "devDependencies": {
+    "albatros": "*"
+  },
+  "albatros": {
+    "actions": {
+      "intercept": {
+        "label": "Пересечение полигонов",
+        "cmd": "intercept",
+        "description": "Пересечение выбранны полигонов",
+        "flags": "128"
+      }
+    },
+    "menu": [
+      {
+        "label": "Пересечение",
+        "submenu": [
+          {
+            "action": "intercept"
+          }
+        ]
+      }
+    ]
+  }
+}
