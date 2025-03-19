@@ -30,6 +30,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Copy site
+        run: |
+          mkdir site
+          cp ./README.md ./site/README.md
+          cp ./_config.yml ./site/_config.yml
+          cp -r ./docs ./site/docs
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
