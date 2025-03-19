@@ -40,7 +40,7 @@ jobs:
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
-          destination: ./_site
+          destination: ./jekyll
       - name: Install node
         uses: actions/setup-node@v4
         with:
