@@ -5,7 +5,7 @@ export class Selector{
         return obj && typeof obj.qbounds === 'function' && typeof obj.paint === 'function';
     }
 
-    public async getSelectedDwgEntities  () : Promise<DwgEntity[]> {
+    public async getSelectedDwgEntities  () : Promise<DwgModel3d[]> {
         try {
             const cadViewContext = this.context.cadview;
     
@@ -21,13 +21,9 @@ export class Selector{
                 return [];
             }
     
-            const selectedObjects = Array.from(layer.selectedObjects());
+            const selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgEntity(obj))).map(obj => obj as DwgModel3d);                
     
-            const selectedEntities = selectedObjects
-                .filter(obj => this.isDwgEntity(obj)) 
-                .map(obj => obj as DwgEntity); 
-    
-            return selectedEntities;
+            return selectedObjects;
         } catch (error) {
             console.error('Failed to get selected entities:', error);
             return [];
