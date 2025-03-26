@@ -21,7 +21,7 @@ export class Selector{
                 return [];
             }
     
-            const selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgEntity(obj))).map(obj => obj as DwgModel3d);                
+            const selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);                
     
             return selectedObjects;
         } catch (error) {
