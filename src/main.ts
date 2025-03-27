@@ -1,4 +1,4 @@
-import { IntersectionFinder } from './interceptor';
+
 import { IntersectionFinder2 } from './interceptorv2';
 import { Selector } from './selector';
 

@@ -55,7 +55,7 @@ export class IntersectionFinder2 {
 
         // 4. Создаем геометрию из линий пересечения
         const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
-        await this.drawGeometryTrianglesAsLines(intersectionGeometry, 4);
+        await this.drawGeometryTrianglesAsPolylines(intersectionGeometry, 4);
         // 5. Создаем новую модель
         const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
         const newModel: DwgModel3d = await this.editor.addMesh({
@@ -490,10 +490,11 @@ export class IntersectionFinder2 {
      * @returns vec3[] Уникальные точки
      */
     private removeDuplicatePoints(points: vec3[]): vec3[] {
-        const epsilon: number = 1e-6;
+      /*  const epsilon: number = 1e-6;
         return points.filter((p, i, arr) =>
             arr.findIndex(q => Math3d.vec3.distance(p, q) < epsilon) === i
-        );
+        );*/
+        return points;
     }
 
     /**
