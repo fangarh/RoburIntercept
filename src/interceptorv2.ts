@@ -55,7 +55,7 @@ export class IntersectionFinder2 {
 
         // 4. Создаем геометрию из линий пересечения
         const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
-        await this.drawGeometryTrianglesAsPolylines(intersectionGeometry, 4);
+        await this.drawGeometryTrianglesAsLines(intersectionGeometry, 4);
         // 5. Создаем новую модель
         const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
         const newModel: DwgModel3d = await this.editor.addMesh({
@@ -70,22 +70,58 @@ export class IntersectionFinder2 {
         return newModel;
     }
 
-    private async drawGeometryTrianglesAsPolylines2( geometry: Geometry3d, color : number) {
+    private async drawGeometryTrianglesAsLines(
+        geometry: Geometry3d, 
+        color: number = 0
+    ): Promise<void> {
         const { vertices, indices } = geometry;
-        await this.editor.beginEdit();
-        for (let i = 0; i < indices.length - 1; i ++){
+        this.editor.beginEdit();
+        // Проверка корректности данных: количество индексов должно быть кратно 3
+        if (indices.length % 3 !== 0) {
+            console.error("Некорректное количество индексов в geometry.indices. Должно быть кратно 3.");
+            return;
+        }
+    
+        // Множество для хранения уникальных рёбер
+        const edges = new Set<string>();
+    
+        // Проходим по всем треугольникам (каждый состоит из трёх индексов)
+        for (let i = 0; i < indices.length; i += 3) {
             const idx0 = indices[i];
             const idx1 = indices[i + 1];
-            const v0: vec3 = [vertices[idx0 * 3], vertices[idx0 * 3 + 1], vertices[idx0 * 3 + 2]];
-            const v1: vec3 = [vertices[idx1 * 3], vertices[idx1 * 3 + 1], vertices[idx1 * 3 + 2]];
-            const line :  Partial<DwgLineData> = {
-                color: color, 
-                a:  v0,
-                b:  v1,            
-            };
-            await this.editor.addLine(line);
+            const idx2 = indices[i + 2];
+    
+            // Формируем уникальные идентификаторы рёбер, сортируя индексы
+            const edge1 = [idx0, idx1].sort().join(',');
+            const edge2 = [idx1, idx2].sort().join(',');
+            const edge3 = [idx2, idx0].sort().join(',');
+    
+            // Рисуем первое ребро, если оно ещё не добавлено
+            if (!edges.has(edge1)) {
+                edges.add(edge1);
+                const a: vec3 = [vertices[idx0 * 3], vertices[idx0 * 3 + 1], vertices[idx0 * 3 + 2]];
+                const b: vec3 = [vertices[idx1 * 3], vertices[idx1 * 3 + 1], vertices[idx1 * 3 + 2]];
+                await this.editor.addLine({ color, a, b });
+            }
+    
+            // Рисуем второе ребро, если оно ещё не добавлено
+            if (!edges.has(edge2)) {
+                edges.add(edge2);
+                const a: vec3 = [vertices[idx1 * 3], vertices[idx1 * 3 + 1], vertices[idx1 * 3 + 2]];
+                const b: vec3 = [vertices[idx2 * 3], vertices[idx2 * 3 + 1], vertices[idx2 * 3 + 2]];
+                await this.editor.addLine({ color, a, b });
+            }
+    
+            // Рисуем третье ребро, если оно ещё не добавлено
+            if (!edges.has(edge3)) {
+                edges.add(edge3);
+                const a: vec3 = [vertices[idx2 * 3], vertices[idx2 * 3 + 1], vertices[idx2 * 3 + 2]];
+                const b: vec3 = [vertices[idx0 * 3], vertices[idx0 * 3 + 1], vertices[idx0 * 3 + 2]];
+                await this.editor.addLine({ color, a, b });
+            }
         }
-        await this.editor.endEdit();
+
+        this.editor.endEdit();
     }
 
     private async drawGeometryTrianglesAsPolylines( geometry: Geometry3d, color : number) {
