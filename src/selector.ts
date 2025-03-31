@@ -1,3 +1,4 @@
+import { DwgType } from "albatros/enums";
 export class Selector{
     constructor (private readonly context:Context){}
 
@@ -23,6 +24,44 @@ export class Selector{
     
             const selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);                
     
+            return selectedObjects;
+        } catch (error) {
+            console.error('Failed to get selected entities:', error);
+            return [];
+        }
+    }
+
+    public async selectedDwgEntities  () : Promise<DwgModel3d[]> {
+        try {
+            const cadViewContext = this.context.cadview;
+    
+            if (!cadViewContext) {
+                console.error('CadViewContext is not available.');
+                return [];
+            }
+    
+            const layer = cadViewContext.layer;
+    
+            if (!layer) {
+                console.error('Layer is not available.');
+                return [];
+            }
+            layer.clearSelected();
+            //await layer.selectObject(undefined, true);
+            //await layer.selectObjects( obj => this.isDwgModel3d(obj), true);
+
+            var obj : any;
+            var selectedObjects : Array<DwgModel3d> = [];
+            while(obj != "end"){
+                obj = await cadViewContext.getobject("Выберите объекты:",{"end":"Завершить выбор"}, (obj) => obj.type === DwgType.model3d);
+                console.log(obj)
+
+                if(this.isDwgModel3d(obj)){
+                    selectedObjects.push(obj);
+                }
+            }
+           // selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);                
+                
             return selectedObjects;
         } catch (error) {
             console.error('Failed to get selected entities:', error);

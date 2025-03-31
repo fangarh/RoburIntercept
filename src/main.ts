@@ -9,8 +9,9 @@ export default {
         const intercept = new IntersectionFinder2(ctx);
   
         var result = await select.getSelectedDwgEntities();
-             
-        ctx.showMessage("compleated " + result.length);
+       // var result1 = await select.selectedDwgEntities();
+    
+       // ctx.showMessage("compleated " + result1.length);
 
         var dwgModel = await intercept.findIntersection(result[0], result[1]) as DwgModel3d;
         //console.log(dwgModel);

@@ -45,6 +45,7 @@ export class IntersectionFinder2 {
         const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
         const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
 
+
         // 3. Вычисляем линии пересечения
         const intersectionLines: { a: vec3; b: vec3 }[] = await this.computeTriangleIntersections(
             model1,
@@ -55,7 +56,8 @@ export class IntersectionFinder2 {
 
         // 4. Создаем геометрию из линий пересечения
         const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
-        await this.drawGeometryTrianglesAsPolylines(intersectionGeometry, 4);
+       // await this.drawGeometryTrianglesAsPolylines(intersectionGeometry, 4);
+        this.editor.beginEdit();
         // 5. Создаем новую модель
         const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
         const newModel: DwgModel3d = await this.editor.addMesh({
@@ -66,7 +68,24 @@ export class IntersectionFinder2 {
         });
         const geometry: DwgGeometry3d = await this.drawing.geometries.add(uuidGeometry);
         await newModel.addMesh({ geometry });
+        this.editor.endEdit();
+// Add annotation if there are intersection points
+if (intersectionLines.length > 0 && uuidGeometry.bounds) {
+    const box: box3 = uuidGeometry.bounds; // Minimal box containing all intersection points
+    const center: vec3 = [0, 0, 0];
+    Math3d.box3.center(center, box); // Compute the center of the box
 
+    const annotation: AnnotationInit<AnnotationSimple> = {
+        type: 'simple',
+        position: center,
+        text: model1.layer?.layer?.getx("name") + " " + model2.layer?.layer?.getx("name"),
+        attachment: 'center', // Optional: aligns the label at the center
+    };
+
+    const layer = this.context.cadview?.annotations.standard!; // Use the standard annotation layer
+    layer.add(annotation); // Add the annotation
+    this.context.cadview?.invalidate(); // Refresh the view to display the annotation
+}
         return newModel;
     }
 
@@ -128,6 +147,7 @@ export class IntersectionFinder2 {
         const { vertices, indices } = geometry;
     
         // Проверяем, что количество индексов кратно 3 (каждый треугольник — 3 вершины)
+        console.log(indices)
         if (indices.length % 3 !== 0) {
             console.error("Некорректное количество индексов в geometry.indices. Должно быть кратно 3.");
             return;
