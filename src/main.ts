@@ -2,12 +2,12 @@
 import { IntersectionFinder2 } from './interceptorv2';
 import { Selector } from './selector';
 
-
+var iter:number = 0;
 export default {
     intercept:async (ctx: Context) => {
         const select = new Selector(ctx);
         const intercept = new IntersectionFinder2(ctx);
-  
+        ctx.cadview?.annotations.standard.clear();
         var firstObjects = await select.getSelectedDwgEntities();
         var toIntersect = await select.selectDwgEntities("Выберите объекты для пересечения");
         const startTime = new Date().getTime();
@@ -26,6 +26,6 @@ export default {
         const endTime = new Date().getTime();
         //var dwgModel = await intercept.findIntersection(result[0], result[1]) as DwgModel3d;
         // console.log(count);
-        ctx.showMessage(`Найдено пересечений: ${count} <br>Затрачено времени: ${endTime - startTime}ms`)
+        ctx.showMessage(`Найдено пересечений: ${count} \nЗатрачено времени: ${endTime - startTime}ms \n${++iter} ` )
     }
 }

@@ -77,7 +77,7 @@ export class IntersectionFinder2 {
         this.editor.endEdit();
         */
         // Add annotation if there are intersection points
-        this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + " " + model2.layer?.getx("name") )
+        this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
 
         return true;
     }
@@ -98,6 +98,7 @@ export class IntersectionFinder2 {
             const layer = this.context.cadview?.annotations.standard!; // Use the standard annotation layer
             layer.add(annotation); // Add the annotation
             this.context.cadview?.invalidate(); // Refresh the view to display the annotation
+            
         }
     }
 
