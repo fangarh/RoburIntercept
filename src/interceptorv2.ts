@@ -19,7 +19,7 @@ export class IntersectionFinder2 {
      * @param entity2 Вторая сущность
      * @returns Promise<DwgEntity> Новая сущность, представляющая пересечение
      */
-    public async findIntersection(entity1: DwgModel3d, entity2: DwgModel3d): Promise<DwgEntity> {
+    public async findIntersection(entity1: DwgModel3d, entity2: DwgModel3d): Promise<boolean> {
 
             return this.createIntersectionModel(entity1, entity2);
 
@@ -31,14 +31,16 @@ export class IntersectionFinder2 {
      * @param model2 Вторая 3D-модель
      * @returns Promise<DwgModel3d> Новая модель пересечения
      */
-    private async createIntersectionModel(model1: DwgModel3d, model2: DwgModel3d): Promise<DwgModel3d> {
+    private async createIntersectionModel(model1: DwgModel3d, model2: DwgModel3d): Promise<boolean> {
         // 1. Вычисляем мировые ограничивающие коробки и их пересечение
         const box1World: box3 = this.getWorldBoundingBox(model1);
         const box2World: box3 = this.getWorldBoundingBox(model2);
         const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
 
         if (!intersectionBoxWorld) {
-            return this.createEmptyDwgModel3d();
+            //return this.createEmptyDwgModel3d();
+
+            return false;
         }
 
         // 2. Получаем кандидатные треугольники
@@ -54,39 +56,49 @@ export class IntersectionFinder2 {
             candidateTriangles2
         );
 
+        if(intersectionLines.length == 0)
+            return false;
         // 4. Создаем геометрию из линий пересечения
         const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
        // await this.drawGeometryTrianglesAsPolylines(intersectionGeometry, 4);
-        this.editor.beginEdit();
+
         // 5. Создаем новую модель
         const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
+        /*
         const newModel: DwgModel3d = await this.editor.addMesh({
             position: [0, 0, 0],
             rotation: 0,
             scale: [1, 1, 1],
             normal: [0, 0, 1],
         });
+        this.editor.beginEdit();
         const geometry: DwgGeometry3d = await this.drawing.geometries.add(uuidGeometry);
         await newModel.addMesh({ geometry });
         this.editor.endEdit();
-// Add annotation if there are intersection points
-if (intersectionLines.length > 0 && uuidGeometry.bounds) {
-    const box: box3 = uuidGeometry.bounds; // Minimal box containing all intersection points
-    const center: vec3 = [0, 0, 0];
-    Math3d.box3.center(center, box); // Compute the center of the box
+        */
+        // Add annotation if there are intersection points
+        this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + " " + model2.layer?.getx("name") )
 
-    const annotation: AnnotationInit<AnnotationSimple> = {
-        type: 'simple',
-        position: center,
-        text: model1.layer?.layer?.getx("name") + " " + model2.layer?.layer?.getx("name"),
-        attachment: 'center', // Optional: aligns the label at the center
-    };
+        return true;
+    }
 
-    const layer = this.context.cadview?.annotations.standard!; // Use the standard annotation layer
-    layer.add(annotation); // Add the annotation
-    this.context.cadview?.invalidate(); // Refresh the view to display the annotation
-}
-        return newModel;
+    private addAnnotation(intersectionLines: { a: vec3; b: vec3 }[], uuidGeometry: UuidGeometry3d, text: string){
+        if (intersectionLines.length > 0 && uuidGeometry.bounds) {
+            const box: box3 = uuidGeometry.bounds; // Minimal box containing all intersection points
+            const center: vec3 = [0, 0, 0];
+            Math3d.box3.center(center, box); // Compute the center of the box
+
+            const annotation: AnnotationInit<AnnotationSimple> = {
+                type: 'simple',
+                position: center,
+                text: text ,
+                attachment: 'center', // Optional: aligns the label at the center
+            };
+
+            const layer = this.context.cadview?.annotations.standard!; // Use the standard annotation layer
+            layer.add(annotation); // Add the annotation
+            this.context.cadview?.invalidate(); // Refresh the view to display the annotation
+        }
     }
 
     private async drawGeometryTrianglesAsLines(
@@ -207,6 +219,10 @@ if (intersectionLines.length > 0 && uuidGeometry.bounds) {
     private getWorldBoundingBox(model: DwgModel3d): box3 {
         const box: box3 = Math3d.box3.alloc();
         let initialized: boolean = false;
+
+        if(model.meshes == undefined){
+            return [0, 0, 0, 0, 0, 0]; // Пустая коробка
+        }
 
         for (const mesh of Object.values(model.meshes)) {
             const geometry: DwgGeometry3d | undefined = mesh.geometry;
@@ -547,6 +563,7 @@ if (intersectionLines.length > 0 && uuidGeometry.bounds) {
      * @returns Promise<DwgModel3d> Пустая модель
      */
     private async createEmptyDwgModel3d(): Promise<DwgModel3d> {
+        await this.editor.beginEdit();
         const emptyGeometry: Geometry3d = {
             vertices: new Float32Array(),
             normals: new Float32Array(),
@@ -561,6 +578,7 @@ if (intersectionLines.length > 0 && uuidGeometry.bounds) {
         });
         const geometry: DwgGeometry3d = await this.drawing.geometries.add(uuidGeometry);
         await newModel.addMesh({ geometry });
+        await this.editor.endEdit();
         return newModel;
     }
 }

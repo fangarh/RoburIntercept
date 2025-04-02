@@ -22,8 +22,12 @@ export class Selector{
                 return [];
             }
     
-            const selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);                
-    
+            var selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);                
+            
+            if(selectedObjects.length < 1){
+                selectedObjects = await this.selectDwgEntities("Выберите объекты", false)
+            }
+
             return selectedObjects;
         } catch (error) {
             console.error('Failed to get selected entities:', error);
@@ -31,7 +35,7 @@ export class Selector{
         }
     }
 
-    public async selectedDwgEntities  () : Promise<DwgModel3d[]> {
+    public async selectDwgEntities  (text: string, canAll : boolean = true) : Promise<DwgModel3d[]> {
         try {
             const cadViewContext = this.context.cadview;
     
@@ -52,17 +56,22 @@ export class Selector{
 
             var obj : any;
             var selectedObjects : Array<DwgModel3d> = [];
-            while(obj != "end"){
-                obj = await cadViewContext.getobject("Выберите объекты:",{"end":"Завершить выбор"}, (obj) => obj.type === DwgType.model3d);
+            const chois:AlternativeCommands = canAll?{"end":"Завершить выбор", "all":"Выбрать все"}:{"end":"Завершить выбор"};
+            while(true){
+                obj = await cadViewContext.getobject(text, chois, (obj) => obj.type === DwgType.model3d);
                 console.log(obj)
-
-                if(this.isDwgModel3d(obj)){
-                    selectedObjects.push(obj);
+                if(obj == "all"){
+                    await layer.selectObjects(obj => this.isDwgModel3d(obj), true);
+                    selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);
+                    console.log(selectedObjects);
+                    return selectedObjects;
                 }
+                if(obj == "end"){
+                    return selectedObjects;
+                }
+
+                selectedObjects.push(obj as DwgModel3d);
             }
-           // selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);                
-                
-            return selectedObjects;
         } catch (error) {
             console.error('Failed to get selected entities:', error);
             return [];
