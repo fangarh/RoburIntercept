@@ -57,6 +57,7 @@ export class IntersectionFinder3 {
             if (geometry) {
                 const localBounds: box3 = geometry.bounds;
                 const worldBounds: box3 = Math3d.box3.transformed(Math3d.box3.alloc(), localBounds, model.matrix);
+
                 if (!initialized) {
                     Math3d.box3.dup(box, worldBounds);
                     initialized = true;
@@ -83,7 +84,7 @@ export class IntersectionFinder3 {
         if (minX < maxX && minY < maxY && minZ < maxZ) {
             return [minX, minY, minZ, maxX, maxY, maxZ];
         }
-        console.log(Math3d.box3.containBox(box1, box2))
+
         return undefined;
     }
 
@@ -156,13 +157,11 @@ export class IntersectionFinder3 {
             return [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
         }
     
-        let indices: Uint32Array = new Uint32Array(geometry.indices); 
-    
         const vertices: Float32Array = geometry.vertices;
     
-        const i0: number = indices[triangleIndex * 3];
-        const i1: number = indices[triangleIndex * 3 + 1];
-        const i2: number = indices[triangleIndex * 3 + 2];    
+        const i0: number = geometry.indices[triangleIndex * 3];
+        const i1: number = geometry.indices[triangleIndex * 3 + 1];
+        const i2: number = geometry.indices[triangleIndex * 3 + 2];    
 
         return [
             [vertices[i0 * 3], vertices[i0 * 3 + 1], vertices[i0 * 3 + 2]],
@@ -173,12 +172,12 @@ export class IntersectionFinder3 {
 
 
     private intersectTriangles(t1: [vec3, vec3, vec3], t2: [vec3, vec3, vec3]): { a: vec3; b: vec3 } | null {
-        var plane1 : plane3 = Math3d.plane3.make3pt(Math3d.plane3.alloc(), ...t1); 
-        var plane2 : plane3 = Math3d.plane3.make3pt(Math3d.plane3.alloc(), ...t2); 
+        var plane1 : plane3 = Math3d.plane3.make3pt(Math3d.plane3.alloc(), t1[0], t1[1], t1[2]); 
+        var plane2 : plane3 = Math3d.plane3.make3pt(Math3d.plane3.alloc(), t2[0], t2[1], t2[2]); 
 
         const intersections1: vec3[] = this.getIntersections(t2, plane1, t1);
         const intersections2: vec3[] = this.getIntersections(t1, plane2, t2);
-        const allIntersections: vec3[] = this.removeDuplicatePoints([...intersections1, ...intersections2]);
+        const allIntersections: vec3[] = this.removeDuplicatePoints(intersections1.concat(intersections2));
 
         if (allIntersections.length < 2) {
             return null;
