@@ -33,16 +33,22 @@ export class IntersectionFinder2 {
      */
     private async createIntersectionModel(model1: DwgModel3d, model2: DwgModel3d): Promise<boolean> {
         // 1. Вычисляем мировые ограничивающие коробки и их пересечение
+        
         const box1World: box3 = this.getWorldBoundingBox(model1);
         const box2World: box3 = this.getWorldBoundingBox(model2);
+
+      /*  if(!Math3d.box3.containBox(box1World, box2World))
+            return false;*/
         const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
+
+        
 
         if (!intersectionBoxWorld) {
             //return this.createEmptyDwgModel3d();
-
+            //console.log('>>' + Math3d.box3.containBox(box1World, box2World))
             return false;
         }
-
+        
         // 2. Получаем кандидатные треугольники
         const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
         const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
@@ -63,7 +69,7 @@ export class IntersectionFinder2 {
        // await this.drawGeometryTrianglesAsPolylines(intersectionGeometry, 4);
 
         // 5. Создаем новую модель
-        const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
+        //const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
         /*
         const newModel: DwgModel3d = await this.editor.addMesh({
             position: [0, 0, 0],
@@ -77,7 +83,7 @@ export class IntersectionFinder2 {
         this.editor.endEdit();
         */
         // Add annotation if there are intersection points
-        this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
+        //this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
 
         return true;
     }

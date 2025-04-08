@@ -1,12 +1,14 @@
 
-import { IntersectionFinder2 } from './interceptorv2';
+import { IntersectionFinder3 } from './interceptor3';
 import { Selector } from './selector';
+
 
 var iter:number = 0;
 export default {
     intercept:async (ctx: Context) => {
         const select = new Selector(ctx);
-        const intercept = new IntersectionFinder2(ctx);
+        const intercept = new IntersectionFinder3(ctx);
+
         ctx.cadview?.annotations.standard.clear();
         var firstObjects = await select.getSelectedDwgEntities();
         var toIntersect = await select.selectDwgEntities("Выберите объекты для пересечения");
@@ -17,7 +19,6 @@ export default {
                 if(firstObjects[i].$id == toIntersect[j].$id)
                     continue;
                 var dwgModel = await intercept.findIntersection(firstObjects[i], toIntersect[j]);
-                //console.log(dwgModel);
 
                 if(dwgModel)
                     count ++;
