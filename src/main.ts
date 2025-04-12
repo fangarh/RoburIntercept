@@ -28,8 +28,8 @@ export default {
                 var dwgModel = await intercept.findIntersection(firstObjects[i], toIntersect[j], true);
 
                 ctx.setStatusBarMessage(`Обработано ${percent+1} из ${total}, ${Math.ceil(percent / total * 100.)}%.`+
-                ` Затрачено времени: ${Math.ceil((new Date().getTime() - startTime)/1000)}c.`+
-                ` Найдено пересечений: ${count}. Совпадений: ${same}  `);
+                    ` Затрачено времени: ${Math.ceil((new Date().getTime() - startTime)/1000)}c.`+
+                    ` Найдено пересечений: ${count}. Совпадений: ${same}  `);
                 
                 if(dwgModel)
                     count ++;
@@ -39,7 +39,7 @@ export default {
         //var dwgModel = await intercept.findIntersection(result[0], result[1]) as DwgModel3d;
         // console.log(count);
         ctx.setStatusBarMessage("Прогресс 100%", 0.5);
-        ctx.showMessage(`Найдено пересечений: ${count} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c`+
-                        `\nСовпадений: ${same} ` )
+        ctx.showMessage(`Найдено пересечений: ${count} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
+                        `Совпадений: ${same} ` );
     }
 }
