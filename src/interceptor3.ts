@@ -1,3 +1,4 @@
+import {LineSegmentProcessor} from './centroid'
 type MeshTriangle = { mesh: DwgMesh; triangleIndex: number };
 
 export class IntersectionFinder3 {
@@ -11,7 +12,7 @@ export class IntersectionFinder3 {
         this.drawing = context.cadview?.layer?.drawing?.layout.drawing!;
     }
 
-    public async findIntersection(model1: DwgModel3d, model2: DwgModel3d): Promise<boolean> {
+    public async findIntersection(model1: DwgModel3d, model2: DwgModel3d, paint: boolean): Promise<boolean> {
         const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
 
         if(!box1World) return false;
@@ -37,10 +38,11 @@ export class IntersectionFinder3 {
         if(intersectionLines.length == 0)
             return false;
 
-      //  const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
-      //  const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
-      //  this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
-
+        if(paint){
+            const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
+            const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
+            this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
+        }
         return true;
     }
 
@@ -269,13 +271,14 @@ export class IntersectionFinder3 {
 
     private addAnnotation(intersectionLines: { a: vec3; b: vec3 }[], uuidGeometry: UuidGeometry3d, text: string){
         if (intersectionLines.length > 0 && uuidGeometry.bounds) {
-            const box: box3 = uuidGeometry.bounds; 
-            const center: vec3 = [0, 0, 0];
-            Math3d.box3.center(center, box); 
+
+            const processor = new LineSegmentProcessor(intersectionLines);
+            const result = processor.findCenterOrNearestPoint()
+            
 
             const annotation: AnnotationInit<AnnotationSimple> = {
                 type: 'simple',
-                position: center,
+                position: result,
                 text: text ,
                 attachment: 'center', 
             };

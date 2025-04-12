@@ -70,7 +70,7 @@ export class Selector{
                     return selectedObjects;
                 }
 
-                selectedObjects.push(obj as DwgModel3d);
+                selectedObjects.push(obj.value as DwgModel3d);
             }
         } catch (error) {
             console.error('Failed to get selected entities:', error);

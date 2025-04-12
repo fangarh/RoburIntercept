@@ -14,12 +14,23 @@ export default {
         var toIntersect = await select.selectDwgEntities("Выберите объекты для пересечения");
         const startTime = new Date().getTime();
         var count: number = 0;
+        var same: number = 0;
+        var percent: number = 0;
+        var total = firstObjects.length * toIntersect.length;
         for(var i: number = 0; i < firstObjects.length; i ++){
             for(var j: number = 0; j < toIntersect.length; j ++){
-                if(firstObjects[i].$id == toIntersect[j].$id)
+                if(firstObjects[i].$path === toIntersect[j].$path){
+                    same ++
                     continue;
-                var dwgModel = await intercept.findIntersection(firstObjects[i], toIntersect[j]);
+                }
+                percent++;
+               
+                var dwgModel = await intercept.findIntersection(firstObjects[i], toIntersect[j], true);
 
+                ctx.setStatusBarMessage(`Обработано ${percent+1} из ${total}, ${Math.ceil(percent / total * 100.)}%.`+
+                ` Затрачено времени: ${Math.ceil((new Date().getTime() - startTime)/1000)}c.`+
+                ` Найдено пересечений: ${count}. Совпадений: ${same}  `);
+                
                 if(dwgModel)
                     count ++;
             }
@@ -27,6 +38,8 @@ export default {
         const endTime = new Date().getTime();
         //var dwgModel = await intercept.findIntersection(result[0], result[1]) as DwgModel3d;
         // console.log(count);
-        ctx.showMessage(`Найдено пересечений: ${count} \nЗатрачено времени: ${endTime - startTime}ms \n${++iter} ` )
+        ctx.setStatusBarMessage("Прогресс 100%", 0.5);
+        ctx.showMessage(`Найдено пересечений: ${count} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c`+
+                        `\nСовпадений: ${same} ` )
     }
 }
