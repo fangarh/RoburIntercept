@@ -46,7 +46,8 @@
         var percent: number = 0;
         var total = firstObjects.length * toIntersect.length;
 
-        var progress = ctx.beginProgress();
+        const progress = ctx.manager.beginProgress();
+
         const inter : InterceptData[] = [];
         for(var i: number = 0; i < firstObjects.length; i ++){
             for(var j: number = 0; j < toIntersect.length; j ++){
@@ -54,19 +55,22 @@
                     same ++
                     continue;
                 }
-                //var progress = ctx.beginProgress();              
-                //progress.indeterminate = !true;
+
+                progress.label = `${Math.round(Math.ceil(percent / total * 100.))}%`;
                 progress.percents = Math.ceil(percent / total * 100.);
+                progress.details = ctx.tr('Пересечение...');
+
                 var dwgModel = await intercept.findIntersection2(firstObjects[i], toIntersect[j]);
                 
-                //ctx.endProgress(progress)
                 percent++;
                 if(dwgModel)
                     inter.push(dwgModel);
             }
         }
         
-        ctx.endProgress(progress)
+
+        ctx.manager.endProgress(progress);
+
         const endTime = new Date().getTime();
 
         const annotations = new AnnotationHelper(inter, ctx);
