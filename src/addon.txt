@@ -1,0 +1,84 @@
+    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {
+        const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
+
+        if(!box1World) return undefined;
+
+        const box2World: box3 | undefined = this.getWorldBoundingBox(model2);
+
+        if(!box2World) return undefined;
+
+        const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
+
+        if (!intersectionBoxWorld)  return undefined;
+
+        const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
+        const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
+
+        const intersectionLines: { a: vec3; b: vec3 }[] = await this.computeTriangleIntersections(
+            model1,
+            model2,
+            candidateTriangles1,
+            candidateTriangles2
+        );        
+        
+        if(intersectionLines.length == 0)
+            return undefined;
+   
+        const result: InterceptData = {
+            interception : intersectionLines,
+            model1:model1,
+            model2: model2
+        }
+        
+        return result;
+    }
+
+        intercept:async (ctx: Context) => {
+        const select = new Selector(ctx);
+        const intercept = new IntersectionFinder3(ctx);
+
+        ctx.cadview?.annotations.standard.clear();
+        var firstObjects = await select.getSelectedDwgEntities();
+        var toIntersect = await select.selectDwgEntities("Выберите объекты для пересечения");
+        const startTime = new Date().getTime();
+        var count: number = 0;
+        var same: number = 0;
+        var percent: number = 0;
+        var total = firstObjects.length * toIntersect.length;
+
+        var progress = ctx.beginProgress();
+        const inter : InterceptData[] = [];
+        for(var i: number = 0; i < firstObjects.length; i ++){
+            for(var j: number = 0; j < toIntersect.length; j ++){
+                if(firstObjects[i].$path === toIntersect[j].$path){
+                    same ++
+                    continue;
+                }
+                //var progress = ctx.beginProgress();              
+                //progress.indeterminate = !true;
+                progress.percents = Math.ceil(percent / total * 100.);
+                var dwgModel = await intercept.findIntersection2(firstObjects[i], toIntersect[j]);
+                
+                //ctx.endProgress(progress)
+                percent++;
+                if(dwgModel)
+                    inter.push(dwgModel);
+            }
+        }
+        
+        ctx.endProgress(progress)
+        const endTime = new Date().getTime();
+
+        const annotations = new AnnotationHelper(inter, ctx);
+        await annotations.setAnnotations();
+        ctx.showMessage(`Найдено пересечений: ${inter.length} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
+                        `Совпадений: ${same} ` );
+
+        ctx.cadview?.layer.selectedObjects(undefined, obj=>false);ctx.cadview?.layer.clearSelected();
+        //var dwgModel = await intercept.findIntersection(result[0], result[1]) as DwgModel3d;
+        // console.log(count);
+//        ctx.setStatusBarMessage(`Сравнений ${percent} из ${total}, ${Math.ceil(percent / total * 100.)}%.`+
+//                    ` Затрачено времени: ${Math.ceil((new Date().getTime() - startTime)/1000)}c.`+
+//                    ` Найдено пересечений: ${count}. Совпадений: ${same}  `);
+
+    }
