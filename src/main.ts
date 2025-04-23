@@ -2,8 +2,6 @@
 import { IntersectionFinder3 } from './interceptor3';
 import { Selector } from './selector';
 
-
-var iter:number = 0;
 export default {
     intercept:async (ctx: Context) => {
         const select = new Selector(ctx);
@@ -17,13 +15,15 @@ export default {
         var same: number = 0;
         var percent: number = 0;
         var total = firstObjects.length * toIntersect.length;
+        var result : any = {};
+        result.collision = [];
         for(var i: number = 0; i < firstObjects.length; i ++){
             for(var j: number = 0; j < toIntersect.length; j ++){
                 if(firstObjects[i].$path === toIntersect[j].$path){
                     same ++
                     continue;
                 }
-               
+
                 var dwgModel = await intercept.findIntersection(firstObjects[i], toIntersect[j], true);
 
                 ctx.setStatusBarMessage(`Сравнений ${percent+1} из ${total}, ${Math.ceil(percent / total * 100.)}%.`+
@@ -31,17 +31,21 @@ export default {
                     ` Найдено пересечений: ${count}. Совпадений: ${same}  `);
                     
                 percent++;
-                if(dwgModel)
+                if(dwgModel){
                     count ++;
+                    result.collision.push({firstPath: firstObjects[i].$path, secondPath: toIntersect[j].$path})
+                }
             }
         }
         const endTime = new Date().getTime();
         //var dwgModel = await intercept.findIntersection(result[0], result[1]) as DwgModel3d;
         // console.log(count);
+
         ctx.setStatusBarMessage(`Сравнений ${percent} из ${total}, ${Math.ceil(percent / total * 100.)}%.`+
                     ` Затрачено времени: ${Math.ceil((new Date().getTime() - startTime)/1000)}c.`+
                     ` Найдено пересечений: ${count}. Совпадений: ${same}  `);
         ctx.showMessage(`Найдено пересечений: ${count} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
                         `Совпадений: ${same} ` );
+        console.log(JSON.stringify(result));
     }
 }

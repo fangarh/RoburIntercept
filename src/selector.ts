@@ -36,6 +36,7 @@ export class Selector{
     }
 
     public async selectDwgEntities  (text: string, canAll : boolean = true) : Promise<DwgModel3d[]> {
+        var selectedObjects : Array<DwgModel3d> = [];
         try {
             const cadViewContext = this.context.cadview;
     
@@ -55,7 +56,7 @@ export class Selector{
             //await layer.selectObjects( obj => this.isDwgModel3d(obj), true);
 
             var obj : any;
-            var selectedObjects : Array<DwgModel3d> = [];
+
             const chois:AlternativeCommands = canAll?{"end":"Завершить выбор", "all":"Выбрать все"}:{"end":"Завершить выбор"};
             while(true){
                 obj = await cadViewContext.getobject(text, chois, (obj) => obj.type === DwgType.model3d);
@@ -69,12 +70,12 @@ export class Selector{
                 if(obj == "end"){
                     return selectedObjects;
                 }
-
-                selectedObjects.push(obj.value as DwgModel3d);
+                if(selectedObjects.find(elm=>elm.$id === (obj.value as DwgModel3d).$id) == undefined)
+                    selectedObjects.push(obj.value as DwgModel3d);
             }
         } catch (error) {
             console.error('Failed to get selected entities:', error);
-            return [];
+            return selectedObjects;
         }
     }
 

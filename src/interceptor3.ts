@@ -41,7 +41,7 @@ export class IntersectionFinder3 {
         if(paint){
             const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
             const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
-            this.addAnnotation(intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
+            this.addAnnotation(model1, model2, intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
         }
         return true;
     }
@@ -269,7 +269,7 @@ export class IntersectionFinder3 {
         return u >= 0 && v >= 0 && u + v <= 1;
     }
 
-    private addAnnotation(intersectionLines: { a: vec3; b: vec3 }[], uuidGeometry: UuidGeometry3d, text: string){
+    private addAnnotation(model1: DwgModel3d, model2: DwgModel3d, intersectionLines: { a: vec3; b: vec3 }[], uuidGeometry: UuidGeometry3d, text: string){
         if (intersectionLines.length > 0 && uuidGeometry.bounds) {
 
             const processor = new LineSegmentProcessor(intersectionLines);
@@ -280,13 +280,43 @@ export class IntersectionFinder3 {
                 type: 'simple',
                 position: result,
                 text: text ,
-                attachment: 'center', 
+                attachment: 'center', activateCommand: (ann : AnnotationBase)=>{ 
+                    this.context.cadview?.layer.clearSelected()
+                    this.context.cadview?.layer.selectObjects((obj)=>{
+                       
+                        if( obj.$path == model1.$path || obj.$path == model2.$path){
+                            
+                            return true;
+                        }
+                        return false
+                    }, true)
+                   /* this.context.cadview?.layer.drawing?.layout.filter((obj)=>{
+                       
+                        if( obj.$path == model1.$path || obj.$path == model2.$path){
+                            
+                            return false;
+                        }
+                        return true
+                    })*/
+                    console.log(`${model1.$path} collision with ${model2.$path}`)
+                    return {};}
             };
-
+            
             const layer = this.context.cadview?.annotations.standard!; 
             layer.add(annotation);
             this.context.cadview?.invalidate(); 
             
+        }
+    }
+
+    private async setModel3dColor(model3d: DwgModel3d, newColor: number) {
+        try {
+            
+            
+           
+            
+        } catch (error) {
+            console.log("Ошибка при изменении цвета:", error);
         }
     }
 
