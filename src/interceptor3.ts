@@ -1,3 +1,4 @@
+import { InterceptData } from './annotation';
 import {LineSegmentProcessor} from './centroid'
 type MeshTriangle = { mesh: DwgMesh; triangleIndex: number };
 
@@ -44,6 +45,41 @@ export class IntersectionFinder3 {
             this.addAnnotation(model1, model2, intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
         }
         return true;
+    }
+
+    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {
+        const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
+
+        if(!box1World) return undefined;
+
+        const box2World: box3 | undefined = this.getWorldBoundingBox(model2);
+
+        if(!box2World) return undefined;
+
+        const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
+
+        if (!intersectionBoxWorld)  return undefined;
+
+        const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
+        const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
+
+        const intersectionLines: { a: vec3; b: vec3 }[] = await this.computeTriangleIntersections(
+            model1,
+            model2,
+            candidateTriangles1,
+            candidateTriangles2
+        );        
+        
+        if(intersectionLines.length == 0)
+            return undefined;
+   
+        const result: InterceptData = {
+            interception : intersectionLines,
+            model1:model1,
+            model2: model2
+        }
+        
+        return result;
     }
 
     private getWorldBoundingBox(model: DwgModel3d): box3 | undefined{

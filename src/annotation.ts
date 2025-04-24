@@ -13,10 +13,14 @@ declare interface InterceptAnnotation extends AnnotationSimple{
 export class AnnotationHelper{
     private interceptions: InterceptData [];
     private context: Context;
-
-    constructor (interceptions: InterceptData[], context: Context){
+    private material1 : UuidMaterial;
+    private material2 : UuidMaterial;
+    constructor  (interceptions: InterceptData[], context: Context, m1: UuidMaterial, m2:UuidMaterial){
         this.interceptions = interceptions;
         this.context = context;
+        this.material1 = m1;
+        this.material2 = m2;
+        //await Math3d.geometry.createUuidMaterial({ shading: 'Blinn–Phong', diffuse: 0xff000000, specular: 0xff000000, emissive: 0xff000000, shininess: 0, transparency: 0 });
     }
 
     public async setAnnotations(){
@@ -35,7 +39,20 @@ export class AnnotationHelper{
                 intercept: intercept,
                 attachment: 'center', 
                 ctx: this.context,
-                dynamicPaint : this.dynamicPaint
+                dynamicPaint : this.dynamicPaint,
+                activateCommand: (ann : AnnotationBase)=>{ 
+                    //const position = annotation.position;
+                    //this.context.cadview?.camera.focus(position, undefined);
+                    this.context.cadview?.layer.clearSelected()
+                    this.context.cadview?.layer.selectObjects((obj)=>{
+                       
+                        if( obj.$path == intercept.model1.$path || obj.$path == intercept.model2.$path){
+                            
+                            return true;
+                        }
+                        return false
+                    }, true)
+                }
             };
 
             const layer = this.context.cadview?.annotations.standard!; 
@@ -45,47 +62,30 @@ export class AnnotationHelper{
     }
 
     private async dynamicPaint(annotation: Annotation | any, dc: DeviceContext, frustum: ViewFrustum, active: boolean){
-        if(!active) return;
+         if(!active) return;
         
-        dc.reset()
+        dc.pushMatrix();
         const intAnn = annotation as InterceptAnnotation;
         const model1 = intAnn.intercept.model1; 
         const model2 = intAnn.intercept.model2; 
-
-        intAnn.ctx.cadview?.layer.clearSelected();
-
-        for (const mesh of Object.values(model1.meshes)){
-            dc.color = 7;
-            
-            if(mesh.geometry)
-                dc.mesh(await Math3d.geometry.createUuidGeometry3d(mesh.geometry))
+ /*
+      dc.multMatrix(model1.matrix);
+        //dc.rasterizer.color = 4
+        for (const mesh of Object.values(model1.meshes)){          
+            if(mesh.geometry){
+                dc.mesh(mesh.geometry)
+            }
         }
 
+        dc.popMatrix()*/
+        dc.rasterizer.material = this.material2
+        dc.multMatrix(model2.matrix)
         for (const mesh of Object.values(model2.meshes)){
-            dc.color = 8;
-
             if(mesh.geometry)
-                dc.mesh(await Math3d.geometry.createUuidGeometry3d(mesh.geometry))
+                
+                dc.mesh(mesh.geometry)
         }
+        dc.popMatrix();
+        dc.rasterizer.flush();
     }
-/*
-    private createGeometryFromIntersectionLines(lines: { a: vec3; b: vec3 }[]): Geometry3d {
-        const vertices: number[] = [];
-        const indices: number[] = [];
-        let vertexIndex: number = 0;
-
-        for (const line of lines) {
-            vertices.push(line.a[0], line.a[1], line.a[2], line.b[0], line.b[1], line.b[2]);
-            indices.push(vertexIndex, vertexIndex + 1);
-            vertexIndex += 2;
-        }
-
-        const geometry: Geometry3d = {
-            vertices: new Float32Array(vertices),
-            normals: new Float32Array(vertices.length),
-            indices: new Uint32Array(indices),
-        };
-        Math3d.geometry.calculateNormals(geometry);
-        return geometry;
-    }*/
 }
