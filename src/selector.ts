@@ -64,14 +64,17 @@ export class Selector{
                 if(obj == "all"){
                     await layer.selectObjects(obj => this.isDwgModel3d(obj), true);
                     selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);
-                    console.log(selectedObjects);
+                    
                     return selectedObjects;
                 }
                 if(obj == "end"){
                     return selectedObjects;
                 }
-                if(selectedObjects.find(elm=>elm.$id === (obj.value as DwgModel3d).$id) == undefined)
+                if(selectedObjects.find(elm=>elm.$id === (obj.value as DwgModel3d).$id) == undefined){
+                    var mesh = obj.value as DwgModel3d;
+                    console.log(mesh.meshes[0].material)
                     selectedObjects.push(obj.value as DwgModel3d);
+                }
             }
         } catch (error) {
             console.error('Failed to get selected entities:', error);

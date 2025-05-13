@@ -1,37 +1,4 @@
-    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {
-        const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
 
-        if(!box1World) return undefined;
-
-        const box2World: box3 | undefined = this.getWorldBoundingBox(model2);
-
-        if(!box2World) return undefined;
-
-        const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
-
-        if (!intersectionBoxWorld)  return undefined;
-
-        const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
-        const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
-
-        const intersectionLines: { a: vec3; b: vec3 }[] = await this.computeTriangleIntersections(
-            model1,
-            model2,
-            candidateTriangles1,
-            candidateTriangles2
-        );        
-        
-        if(intersectionLines.length == 0)
-            return undefined;
-   
-        const result: InterceptData = {
-            interception : intersectionLines,
-            model1:model1,
-            model2: model2
-        }
-        
-        return result;
-    }
 
         intercept:async (ctx: Context) => {
         const select = new Selector(ctx);
@@ -73,8 +40,7 @@
 
         const endTime = new Date().getTime();
 
-        const annotations = new AnnotationHelper(inter, ctx);
-        await annotations.setAnnotations();
+    
         ctx.showMessage(`Найдено пересечений: ${inter.length} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
                         `Совпадений: ${same} ` );
 

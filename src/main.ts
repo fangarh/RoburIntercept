@@ -17,10 +17,10 @@ export default {
         var percent: number = 0;
         var total = firstObjects.length * toIntersect.length;
 
-        const m1 = await Math3d.geometry.createUuidMaterial({ shading: 'Blinn–Phong', diffuse: 0xff000000, 
-            specular: 0xff000000, ambient: 0xff000000, shininess: 0, transparency: 50 });
-        const m2 = await Math3d.geometry.createUuidMaterial({ shading: 'Blinn–Phong', diffuse: 0xffff0000, 
-                specular: 0xffff0000, ambient: 0xffff0000, shininess: 0, transparency: 50 });
+        const m1 = await Math3d.geometry.createUuidMaterial({ shading: 'Blinn–Phong', diffuse: 8421504, 
+            specular: 14277081, ambient: 3021070, shininess: 0.2, transparency: 50 });
+        const m2 = await Math3d.geometry.createUuidMaterial({ shading: 'Blinn–Phong', diffuse: 8355711, 
+                specular: 12632256, ambient: 3021070, shininess: 0.2, transparency: 50 });
 
         const inter : InterceptData[] = [];
 /*
@@ -37,20 +37,25 @@ export default {
             await promise;
         }
         ctx.manager.endProgress(progress1);*/
-        
+        var old_percent = 0
         const progress = ctx.beginProgress();
         progress.indeterminate = false;
         for(var i: number = 0; i < firstObjects.length; i ++){
             for(var j: number = 0; j < toIntersect.length; j ++){
+
+                if(old_percent  + 1 < Math.ceil(percent / total * 100.)){
+                    old_percent =  Math.ceil(percent / total * 100.)
+                    const promise = new Promise<void>((resolve) => {
+                        setTimeout(() => { resolve() }, 0);
+                    });
+                    await promise;
+                }
+
                 if(firstObjects[i].$path === toIntersect[j].$path){
                     same ++
                     continue;
                 }
 
-                const promise = new Promise<void>((resolve) => {
-                    setTimeout(() => { resolve() }, 0);
-                });
-                await promise;
                 var dwgModel = await intercept.findIntersection2(firstObjects[i], toIntersect[j]);
                     
                 progress.label = `${Math.round(Math.ceil(percent / total * 100.))}%`;
