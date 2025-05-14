@@ -1,9 +1,16 @@
 import { LineSegmentProcessor } from "./centroid";
 
+export type ProjectionLength = {
+    pointA: vec3; 
+    pointB: vec3; 
+    projectedDistance: number
+}
+
 export type InterceptData = {
     model1: DwgModel3d; 
     model2: DwgModel3d;
     interception: { a: vec3; b: vec3 }[];
+    length : ProjectionLength | undefined;
 }
 declare interface InterceptAnnotation extends AnnotationSimple{
     intercept: InterceptData;

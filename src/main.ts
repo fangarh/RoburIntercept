@@ -41,6 +41,7 @@ export default {
         ctx.manager.endProgress(progress1);*/
         var old_percent = 0
         const progress = ctx.beginProgress();
+        const lengthNormal : vec3 = [0,1,0];
         progress.indeterminate = false;
         for(var i: number = 0; i < firstObjects.length; i ++){
             for(var j: number = 0; j < toIntersect.length; j ++){
@@ -58,7 +59,7 @@ export default {
                     continue;
                 }
 
-                var dwgModel = await intercept.findIntersection2(firstObjects[i], toIntersect[j]);
+                var dwgModel = await intercept.findIntersection2(firstObjects[i], toIntersect[j], lengthNormal);
                     
                 progress.label = `${Math.round(Math.ceil(percent / total * 100.))}%`;
                 progress.percents = Math.ceil(percent / total * 100.);
@@ -83,13 +84,8 @@ export default {
         ctx.endProgress(progress);
         ctx.showMessage(`Найдено пересечений: ${inter.length} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
                         `Совпадений: ${same} ` );
-        //console.log(JSON.stringify(inter));
+        console.log(JSON.stringify(inter));
 
-        (ctx.extension as any).intersections = inter;
-
-        // Вызов команды для отображения вьюхи
-        //await ctx.eval('intersections_mount');
-        //await ctx.eval('extension.helloRoburView')
     },
   'extension.helloRoburView': async (ctx: Context): Promise<DefinedView> => {
     return new HelloRoburView(ctx.extension);

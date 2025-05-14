@@ -1,4 +1,4 @@
-import { InterceptData } from './annotation';
+import { InterceptData, ProjectionLength } from './annotation';
 import {LineSegmentProcessor} from './centroid'
 type MeshTriangle = { mesh: DwgMesh; triangleIndex: number };
 
@@ -47,7 +47,7 @@ export class IntersectionFinder3 {
         return true;
     }
 
-    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {
+    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d, normal: vec3 | undefined = undefined): Promise<InterceptData | undefined> {
         const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
 
         if(!box1World) return undefined;
@@ -76,10 +76,49 @@ export class IntersectionFinder3 {
         const result: InterceptData = {
             interception : intersectionLines,
             model1:model1,
-            model2: model2
+            model2: model2,
+            length: (normal == undefined) ? undefined : this.findMaxDistanceOnPlaneProjection(intersectionLines, normal)
         }
         
         return result;
+    }
+
+    private findMaxDistanceOnPlaneProjection(
+        intersectionLines: { a: vec3; b: vec3 }[],
+        planeNormal: vec3
+    ): ProjectionLength | undefined {
+        const points: vec3[] = [];
+        for (const line of intersectionLines) {
+            points.push(line.a, line.b);
+        }
+
+        if (points.length < 2) return undefined;
+
+        const n = Math3d.vec3.normalize([0, 0, 0], planeNormal);
+
+        // Предвычислим проекции всех точек на плоскость
+        const projectedPoints = points.map(p => {
+            const dot = Math3d.vec3.dot(p, n);
+            const projection = Math3d.vec3.sub([0, 0, 0], p, Math3d.vec3.mul([0, 0, 0], n, dot));
+            return { original: p, projected: projection };
+        });
+
+        let maxDist = -Infinity;
+        let result: { pointA: vec3; pointB: vec3 } | undefined = undefined;
+
+        for (let i = 0; i < projectedPoints.length; i++) {
+            for (let j = i + 1; j < projectedPoints.length; j++) {
+                const pi = projectedPoints[i];
+                const pj = projectedPoints[j];
+                const dist = Math3d.vec3.distance(pi.projected, pj.projected);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    result = { pointA: pi.original, pointB: pj.original };
+                }
+            }
+        }
+
+        return result && maxDist > 0 ? { ...result, projectedDistance: maxDist } : undefined;
     }
 
     private getWorldBoundingBox(model: DwgModel3d): box3 | undefined{
