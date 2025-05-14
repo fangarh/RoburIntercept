@@ -21,6 +21,6 @@
       "noFallthroughCasesInSwitch": true,
       "noUncheckedSideEffectImports": true
     },
-    "include": ["src", "node_modules/albatros"]
+    "include": ["src", "src/vue", "./**/*.vue", "node_modules/albatros"]
   }
   

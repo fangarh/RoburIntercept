@@ -2,6 +2,8 @@
 import { AnnotationHelper, InterceptData } from './annotation';
 import { IntersectionFinder3 } from './interceptor3';
 import { Selector } from './selector';
+import { createApp } from 'vue';
+import IntersectionsView from './vue/IntersectionsView.vue';
 
 export default {
     intercept:async (ctx: Context) => {
@@ -81,6 +83,44 @@ export default {
         ctx.endProgress(progress);
         ctx.showMessage(`Найдено пересечений: ${inter.length} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
                         `Совпадений: ${same} ` );
-        console.log(JSON.stringify(inter));
-    }
+        //console.log(JSON.stringify(inter));
+
+        (ctx.extension as any).intersections = inter;
+
+        // Вызов команды для отображения вьюхи
+        //await ctx.eval('intersections_mount');
+        //await ctx.eval('extension.helloRoburView')
+    },
+  'extension.helloRoburView': async (ctx: Context): Promise<DefinedView> => {
+    return new HelloRoburView(ctx.extension);
+  }
 }
+
+class HelloRoburView implements DefinedView {
+  readonly id = 'helloRoburView';  
+  readonly weight = 1;
+  expanded = true;
+
+  constructor(public readonly extension: Extension) {
+    console.log("loaded")
+  }
+
+  get settings() {
+    return this.extension.settings('');
+  }
+
+  get onDidBroadcast() {
+    return () => ({ dispose() {} });
+  }
+
+  render(container: HTMLElement) {
+    console.log('Mount called');
+    container.innerText = 'Hello robur';
+    container.style.padding = '8px';
+    container.style.fontSize = '16px';
+    container.style.fontFamily = 'sans-serif';
+  }
+}
+
+
+

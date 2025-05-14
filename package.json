@@ -26,12 +26,40 @@
     "gh-pages": "^6.3.0"
   },
   "albatros": {
+    "viewsContainers": {
+      "bottomPanel": {
+        "label": "Результаты пересечений",
+        "container": "bottom"
+      },
+       "bottomView": {
+        "label": "Bottom",
+        "container": "bottom"
+      }
+    },
+    "views": {
+      "intersectionsView": {
+        "label": "Результаты",
+        "type": "defined",
+        "container": "bottomPanel",
+        "cmd": "intersections_mount"
+      },
+      "helloRoburView": {
+        "type": "defined",
+        "cmd": "extension.helloRoburView",
+        "label": "Hello Robur",
+        "container": "bottomView"
+      }
+    },
     "actions": {
       "intercept": {
         "label": "Пересечение полигонов",
         "cmd": "intercept",
         "description": "Пересечение выбранны полигонов",
         "flags": "128"
+      },
+      "intersections_mount": {
+        "label": "Открыть результаты",
+        "cmd": "intersections_mount"
       }
     },
     "menu": [
@@ -44,5 +72,8 @@
         ]
       }
     ]
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
   }
 }
