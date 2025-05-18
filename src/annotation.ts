@@ -87,6 +87,7 @@ export class AnnotationHelper{
         }
 
         dc.popMatrix()
+        dc.rasterizer.flush();
         dc.rasterizer.material = this.material2
         dc.multMatrix(model2.matrix)
         for (const mesh of Object.values(model2.meshes)){

@@ -71,8 +71,8 @@ export class Selector{
                     return selectedObjects;
                 }
                 if(selectedObjects.find(elm=>elm.$id === (obj.value as DwgModel3d).$id) == undefined){
-                    var mesh = obj.value as DwgModel3d;
-                    console.log(mesh.meshes[0].material)
+                    //var mesh = obj.value as DwgModel3d;
+                    //console.log(mesh.meshes[0].material)
                     selectedObjects.push(obj.value as DwgModel3d);
                 }
             }
