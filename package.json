@@ -28,11 +28,7 @@
   "albatros": {
     "viewsContainers": {
       "bottomPanel": {
-        "label": "Результаты пересечений",
-        "container": "bottom"
-      },
-       "bottomView": {
-        "label": "Bottom",
+        "label": "Пересечения",
         "container": "bottom"
       }
     },
@@ -42,12 +38,6 @@
         "type": "defined",
         "container": "bottomPanel",
         "cmd": "intersections_mount"
-      },
-      "helloRoburView": {
-        "type": "defined",
-        "cmd": "extension.helloRoburView",
-        "label": "Hello Robur",
-        "container": "bottomView"
       }
     },
     "actions": {
@@ -58,7 +48,7 @@
         "flags": "128"
       },
       "intersections_mount": {
-        "label": "Открыть результаты",
+        "label": "Пересечения",
         "cmd": "intersections_mount"
       }
     },

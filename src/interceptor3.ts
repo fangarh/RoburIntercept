@@ -69,6 +69,7 @@ export class IntersectionFinder3 {
             candidateTriangles1,
             candidateTriangles2
         );        
+               
         
         if(intersectionLines.length == 0)
             return undefined;
@@ -222,6 +223,7 @@ export class IntersectionFinder3 {
 
                 const intersection: { a: vec3; b: vec3 } | null = this.intersectTriangles(vertices1World, vertices2World);
                 if (intersection) {
+                    
                     intersectionLines.push(intersection);
                 }
             }

@@ -2,6 +2,8 @@
 import { AnnotationHelper, InterceptData } from './annotation';
 import { IntersectionFinder3 } from './interceptor3';
 import { Selector } from './selector';
+import IntersectionsView from "./vue/InterceptTable.vue"
+import { createApp } from "vue";
 
 var data: any;
 export default {
@@ -11,7 +13,9 @@ export default {
 
         ctx.cadview?.annotations.standard.clear();
         var firstObjects = await select.getSelectedDwgEntities();
+        
         var toIntersect = await select.selectDwgEntities("Выберите объекты для пересечения");
+        
         const startTime = new Date().getTime();
 
         var same: number = 0;
@@ -50,10 +54,10 @@ export default {
                 progress.label = `${Math.round(Math.ceil(percent / total * 100.))}%`;
                 progress.percents = Math.ceil(percent / total * 100.);
                 progress.details = ctx.tr('Поиск...');
-
-                percent++;
                 
-                if(dwgModel){
+                percent++;
+        
+                if(dwgModel){                  
                     inter.push(dwgModel);
                     const annotations = new AnnotationHelper([dwgModel], ctx, m1, m2);
                     await annotations.setAnnotations();
@@ -67,6 +71,9 @@ export default {
         data = inter;
         ctx.endProgress(progress);
         var ch = ctx.createOutputChannel("intercept")
+
+        console.log(data)
+
         ch.info(`Найдено пересечений: ${inter.length} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
                         `Совпадений: ${same} ` );        
         for(var i: number = 0; i < inter.length; i ++){
@@ -78,36 +85,43 @@ export default {
             ch.info(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
         }
     },
-  'extension.helloRoburView': async (ctx: Context): Promise<DefinedView> => {
-    var v = new HelloRoburView(ctx.extension);
-    v.render(ctx.el)
-    return v;
-  }
-}
+ 'intersections_mount': async (ctx: Context): Promise<DefinedView> => {
+  
+    var elm = ctx.el as HTMLElement;
 
-class HelloRoburView implements DefinedView {
-  readonly id = 'helloRoburView';  
-  readonly weight = 1;
-  expanded = true;
+    
+  // Очищаем содержимое и создаём контейнер
+  elm.innerHTML = '';
+  const mountPoint = document.createElement('div');
+  elm.appendChild(mountPoint);
 
-  constructor(public readonly extension: Extension) {
-    console.log("loaded")
-  }
+  // Монтируем Vue-компонент
+  const app = createApp(IntersectionsView, { data, ctx }); // data — глобальная переменная
 
-  get settings() {
-    return this.extension.settings('');
-  }
+  app.mount(mountPoint);
 
-  get onDidBroadcast() {
-    return () => ({ dispose() {} });
-  }
-
-  render(container: HTMLElement) {
-    console.log('Mount called');
-    container.innerText = 'Hello robur' + data?.length;
-    container.style.padding = '8px';
-    container.style.fontSize = '16px';
-    container.style.fontFamily = 'sans-serif';
+    return   {
+      get id() {
+        return 'intersections_mount';
+      },
+      get extension() {
+        return ctx.extension;
+      },
+      get settings() {
+        return ctx.extension.settings('');
+      },
+      get onDidBroadcast() {
+        return () => ({ dispose() {} });
+      },
+      weight: 1,
+      expanded: true,
+      get label() {
+        return 'Hello Robur';
+      },
+      get description() {
+        return 'A simple bottom view';
+      }
+    };
   }
 }
 
