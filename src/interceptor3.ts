@@ -22,6 +22,8 @@ export class IntersectionFinder3 {
 
         if(!box2World) return false;
 
+        
+
         const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
 
         if (!intersectionBoxWorld)  return false;
@@ -49,7 +51,8 @@ export class IntersectionFinder3 {
 
     public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d, normal: vec3 | undefined = undefined): Promise<InterceptData | undefined> {
         const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
-
+console.log(model1.layer?.typed?.$id + ': ' + model1.layer?.typed?.name)
+console.log(model2.layer?.typed?.$id + ': ' + model2.layer?.typed?.name)
         if(!box1World) return undefined;
 
         const box2World: box3 | undefined = this.getWorldBoundingBox(model2);
@@ -59,6 +62,8 @@ export class IntersectionFinder3 {
         const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
 
         if (!intersectionBoxWorld)  return undefined;
+
+
 
         const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
         const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
@@ -74,6 +79,8 @@ export class IntersectionFinder3 {
         if(intersectionLines.length == 0)
             return undefined;
    
+
+
         const result: InterceptData = {
             interception : intersectionLines,
             model1:model1,
