@@ -1,14 +1,17 @@
 .intercept-table-view {
   padding: 1rem;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: Ubuntu,Monaco,sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 300;
+
   background-color: #1e1e1e;
-  color: #ffffff;
+  color: #f8f7f7;
   font-weight: bold;
 }
 
-.intercept-table-view h2 {
-  font-size: 1.2rem;
-  font-weight: bold;
+.intercept-table-view h22 {
+    font-size: 1.2rem;
+    font-weight: bold;
   margin-bottom: 1rem;
   color: #ffffff;
 }
