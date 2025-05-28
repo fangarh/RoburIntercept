@@ -190,6 +190,7 @@ export default defineComponent({
 
     const intersectionAction = (item: InterceptData) => {
       const ch = props.ctx.createOutputChannel('intercept');
+      props.ctx.cadview?.camera.zoom(item.interceptionBxo, props.ctx.cadview);
       ch.warn(`Количество точек пересечения: ${item.interception.length}`);
     };
 

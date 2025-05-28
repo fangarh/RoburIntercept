@@ -9,6 +9,7 @@ export type ProjectionLength = {
 export type InterceptData = {
     model1: DwgModel3d; 
     model2: DwgModel3d;
+    interceptionBxo : box3;
     interception: { a: vec3; b: vec3 }[];
     length : ProjectionLength | undefined;
 }

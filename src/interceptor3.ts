@@ -80,11 +80,10 @@ export class IntersectionFinder3 {
         
         if(intersectionLines.length == 0)
             return undefined;
-   
-
 
         const result: InterceptData = {
             interception : intersectionLines,
+            interceptionBxo : intersectionBoxWorld,
             model1:model1,
             model2: model2,
             length: (normal == undefined) ? undefined : this.findMaxDistanceOnPlaneProjection(intersectionLines, normal)

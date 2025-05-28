@@ -69,7 +69,7 @@ export default {
                 
             }
         }
-
+          
 
         const endTime = new Date().getTime();
         data = inter;
@@ -101,7 +101,7 @@ export default {
   elm.innerHTML = '';
   const mountPoint = document.createElement('div');
   elm.appendChild(mountPoint);
-  const constructions = ch.getConstructions();
+  const constructions = ch.getConstructions().sort((a,b)=>a.name.localeCompare(b.name));
 const constructionPairs = ch.getConstructionPairs();
 
   // Монтируем Vue-компонент
