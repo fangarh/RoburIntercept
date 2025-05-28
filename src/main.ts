@@ -1,15 +1,19 @@
 
 import { AnnotationHelper, InterceptData } from './annotation';
+import { ConstructionHelper } from './constructions';
 import { IntersectionFinder3 } from './interceptor3';
 import { Selector } from './selector';
 import IntersectionsView from "./vue/InterceptTable.vue"
 import { createApp } from "vue";
-
+    
+var ch : ConstructionHelper = new ConstructionHelper();
 var data: any;
 export default {
     intercept:async (ctx: Context) => {
         const select = new Selector(ctx);
         const intercept = new IntersectionFinder3(ctx);
+        const pairs = ch?.getConstructionPairs();
+        console.log("asdds " + pairs.length)
 
         ctx.cadview?.annotations.standard.clear();
         var firstObjects = await select.getSelectedDwgEntities();
@@ -49,7 +53,7 @@ export default {
                     continue;
                 }
 
-                var dwgModel = await intercept.findIntersection2(firstObjects[i], toIntersect[j], lengthNormal);
+                var dwgModel = await intercept.findIntersection2(firstObjects[i], toIntersect[j], ch, lengthNormal);
                     
                 progress.label = `${Math.round(Math.ceil(percent / total * 100.))}%`;
                 progress.percents = Math.ceil(percent / total * 100.);
@@ -70,33 +74,44 @@ export default {
         const endTime = new Date().getTime();
         data = inter;
         ctx.endProgress(progress);
-        var ch = ctx.createOutputChannel("intercept")
+        var chanel = ctx.createOutputChannel("intercept")
 
         console.log(data)
 
-        ch.info(`Найдено пересечений: ${inter.length} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
+        chanel.info(`Найдено пересечений: ${inter.length} \nЗатрачено времени: ${Math.ceil((endTime - startTime)/1000)}c\n`+
                         `Совпадений: ${same} ` );        
         for(var i: number = 0; i < inter.length; i ++){
           if(inter[i].length == undefined)continue;
           
           if(inter[i].length.projectedDistance > 5)
-            ch.warn(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
+            chanel.warn(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
           else
-            ch.info(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
+            chanel.info(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
         }
     },
  'intersections_mount': async (ctx: Context): Promise<DefinedView> => {
   
     var elm = ctx.el as HTMLElement;
+    const select = new Selector(ctx);
 
+
+    ch.BuildConstructionTypes(await select.selectAll())
     
   // Очищаем содержимое и создаём контейнер
   elm.innerHTML = '';
   const mountPoint = document.createElement('div');
   elm.appendChild(mountPoint);
+  const constructions = ch.getConstructions();
+const constructionPairs = ch.getConstructionPairs();
 
   // Монтируем Vue-компонент
-  const app = createApp(IntersectionsView, { data, ctx }); // data — глобальная переменная
+  const app = createApp(IntersectionsView, {
+  data,
+  ctx,
+  constructions,
+  constructionPairs,
+  ch
+}); // data — глобальная переменная
 
   app.mount(mountPoint);
 

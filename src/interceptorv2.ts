@@ -166,7 +166,7 @@ export class IntersectionFinder2 {
         const { vertices, indices } = geometry;
     
         // Проверяем, что количество индексов кратно 3 (каждый треугольник — 3 вершины)
-        console.log(indices)
+        
         if (indices.length % 3 !== 0) {
             console.error("Некорректное количество индексов в geometry.indices. Должно быть кратно 3.");
             return;

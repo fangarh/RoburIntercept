@@ -1,5 +1,42 @@
 <template>
   <div class="intercept-table-view">
+    <h2 class="title">Выбор конструкций</h2>
+
+    <div class="select-grid">
+      <div>
+        <label>Первая конструкция</label>
+        <select v-model="selectedFirst" class="select">
+          <option v-for="c in constructions" :key="c.id" :value="c">
+            {{ c.name }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label>Вторая конструкция</label>
+        <select v-model="selectedSecond" class="select">
+          <option v-for="c in constructions" :key="c.id" :value="c">
+            {{ c.name }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <button @click="addPair" class="add-btn">
+      Добавить пару
+    </button>
+
+    <h3 class="subtitle">Выбранные пары:</h3>
+    <ul class="pair-list">
+      <li
+        v-for="(pair, index) in constructionPairs"
+        :key="index"
+        class="pair-item"
+      >
+        <span>{{ pair.first.name }} — {{ pair.second.name }}</span>
+        <button @click="removePair(pair)" class="remove-btn">Удалить</button>
+      </li>
+    </ul>
     <h2>
       Пересечения
       <span v-if="filteredData">({{ filteredData.length }} из {{ data?.length ?? 0 }})</span>
@@ -47,8 +84,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref, computed } from 'vue';
-import './style/InterceptTable.css'; // ✅ обновлённый путь к стилю
+import { defineComponent, PropType, ref, computed, onMounted  } from 'vue';
+import { ConstructionHelper, ConstructionType, ConstructionPair } from './../constructions';
+import './style/InterceptTable.css'; //  обновлённый путь к стилю
 
 interface vec3 extends Array<number> {
   0: number;
@@ -80,17 +118,32 @@ export interface InterceptData {
 export default defineComponent({
   name: 'InterceptTable',
   props: {
+    constructions: {
+      type: Array as () => ConstructionType[],
+      required: true
+    },
+    constructionPairs: {
+      type: Array as () => ConstructionPair[],
+      required: true
+    },
+    ch: {
+      type: Object,
+      required: true
+    },
+    ctx: Object,
     data: {
       type: Array as PropType<InterceptData[]>,
       required: false
-    },
-    ctx: {
-      type: Object as PropType<Context>,
-      required: true
     }
   },
   setup(props) {
+    const constructions = ref([...props.constructions]);
+    const constructionPairs = ref([...props.constructionPairs]);
     const filterValue = ref<number>(5);
+    const constructionTypes = ref<ConstructionType[]>([]);
+    const selectedFirst = ref<ConstructionType | null>(null);
+    const selectedSecond = ref<ConstructionType | null>(null);
+    
 
     const filteredData = computed(() => {
       if (!props.data || !Array.isArray(props.data)) return [];
@@ -99,6 +152,35 @@ export default defineComponent({
         item.length.projectedDistance >= filterValue.value
       );
     });
+
+
+    function addPair() {
+      if (!selectedFirst.value || !selectedSecond.value) return;
+
+      const first = selectedFirst.value;
+      const second = selectedSecond.value;
+
+      const exists = constructionPairs.value.some(p =>
+        (p.first.id === first.id && p.second.id === second.id) ||
+        (p.first.id === second.id && p.second.id === first.id)
+      );
+
+      if (!exists) {
+        const newPair = { first, second } as ConstructionPair;
+        constructionPairs.value.push(newPair);
+        props.ch.addConstructionPair(newPair);
+      }
+
+      selectedFirst.value = null;
+      selectedSecond.value = null;
+    }
+
+    function removePair(pair: ConstructionPair) {
+      constructionPairs.value = constructionPairs.value.filter(p =>
+        !(p.first.id === pair.first.id && p.second.id === pair.second.id)
+      );
+      props.ch.removeConstructionPair(pair);
+    }
 
     const formatDistance = (value?: number): string =>
       value !== undefined ? value.toFixed(2) : '—';
@@ -116,7 +198,16 @@ export default defineComponent({
       filteredData,
       formatDistance,
       formatObjectId,
-      intersectionAction
+      intersectionAction,
+            addPair,
+      removePair,
+      
+      constructionTypes,
+      selectedFirst,
+      selectedSecond,
+      constructionPairs,
+      
+      
     };
   }
 });

@@ -1,5 +1,6 @@
 import { InterceptData, ProjectionLength } from './annotation';
 import {LineSegmentProcessor} from './centroid'
+import { ConstructionHelper } from './constructions';
 type MeshTriangle = { mesh: DwgMesh; triangleIndex: number };
 
 export class IntersectionFinder3 {
@@ -49,10 +50,11 @@ export class IntersectionFinder3 {
         return true;
     }
 
-    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d, normal: vec3 | undefined = undefined): Promise<InterceptData | undefined> {
+    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d, constructionHelper: ConstructionHelper | undefined,  normal: vec3 | undefined = undefined): Promise<InterceptData | undefined> {
+        if (!constructionHelper?.hasConstructionPairFromModels(model1, model2))  return undefined;  
+        
         const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
-console.log(model1.layer?.typed?.$id + ': ' + model1.layer?.typed?.name)
-console.log(model2.layer?.typed?.$id + ': ' + model2.layer?.typed?.name)
+
         if(!box1World) return undefined;
 
         const box2World: box3 | undefined = this.getWorldBoundingBox(model2);

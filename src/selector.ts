@@ -82,6 +82,23 @@ export class Selector{
         }
     }
 
+    public async selectAll(): Promise<DwgModel3d[]>{
+        const cadViewContext = this.context.cadview;
+        var selectedObjects : Array<DwgModel3d> = [];
+        if (!cadViewContext) {
+            console.error('CadViewContext is not available.');
+            return selectedObjects;
+        }
+        const layer = cadViewContext.layer;
+        await layer.selectObjects(obj => this.isDwgModel3d(obj), true);
+        selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);
+
+        layer.clearSelected();
+
+        return selectedObjects;
+    }
+
+
     private isDwgModel3d(entity: DwgEntity): boolean {
         return 'meshes' in entity && entity.meshes !== undefined;
     }
