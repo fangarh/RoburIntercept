@@ -12,6 +12,7 @@ export type InterceptData = {
     interceptionBxo : box3;
     interception: { a: vec3; b: vec3 }[];
     length : ProjectionLength | undefined;
+    annot: AnnotationInit<InterceptAnnotation> | undefined;
 }
 declare interface InterceptAnnotation extends AnnotationSimple{
     intercept: InterceptData;
@@ -64,9 +65,11 @@ export class AnnotationHelper{
  
                 }
             };
+            //intercept.annot = annotation;
 
             const layer = this.context.cadview?.annotations.standard!; 
             layer.add(annotation);
+
             this.context.cadview?.invalidate(); 
         }
     }

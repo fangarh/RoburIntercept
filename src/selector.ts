@@ -6,7 +6,7 @@ export class Selector{
         return obj && typeof obj.qbounds === 'function' && typeof obj.paint === 'function';
     }
 
-    public async getSelectedDwgEntities  () : Promise<DwgModel3d[]> {
+    public async getSelectedDwgEntities  (all: boolean) : Promise<DwgModel3d[]> {
         try {
             const cadViewContext = this.context.cadview;
     
@@ -25,7 +25,7 @@ export class Selector{
             var selectedObjects = Array.from(layer.selectedObjects(undefined, obj => this.isDwgModel3d(obj))).map(obj => obj as DwgModel3d);                
             
             if(selectedObjects.length < 1){
-                selectedObjects = await this.selectDwgEntities("Выберите объекты", false)
+                selectedObjects = await this.selectDwgEntities("Выберите объекты", all)
             }
 
             return selectedObjects;

@@ -13,10 +13,9 @@ export default {
         const select = new Selector(ctx);
         const intercept = new IntersectionFinder3(ctx);
         const pairs = ch?.getConstructionPairs();
-        console.log("asdds " + pairs.length)
 
         ctx.cadview?.annotations.standard.clear();
-        var firstObjects = await select.getSelectedDwgEntities();
+        var firstObjects = await select.getSelectedDwgEntities(pairs.length > 0);
         
         var toIntersect = await select.selectDwgEntities("Выберите объекты для пересечения");
         
@@ -83,7 +82,7 @@ export default {
         for(var i: number = 0; i < inter.length; i ++){
           if(inter[i].length == undefined)continue;
           
-          if(inter[i].length.projectedDistance > 5)
+          if(inter[i].length?.projectedDistance! > 5)
             chanel.warn(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
           else
             chanel.info(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
