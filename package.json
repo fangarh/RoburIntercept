@@ -22,10 +22,39 @@
     "build": "albatros-cli build"
   },
   "devDependencies": {
-    "albatros": "1.2.0",
+    "albatros": "latest",
     "gh-pages": "^6.3.0"
   },
   "albatros": {
+    "rules":{
+      "intercept":{
+        "app":"wdx",
+        "description":"Поиск пересечений",
+        "title":"Поиск пересечений"
+      }
+    },
+    "properties": {
+      "interceptRule": [
+        {
+          "cmd": "property:firstConstruction",
+          "label": "Первая конструкция",
+          "field": "firstConstruction",
+          "description": "Выбор первой конструкции для сравнения"
+        },
+        {
+          "cmd": "property:secondConstruction",
+          "label": "Вторая конструкция",
+          "field": "secondConstruction",
+          "description": "Выбор второй конструкции для сравнения"
+        },
+        {
+          "cmd": "property:minDepth",
+          "label": "Минимальная глубина пересечения",
+          "field": "minDepth",
+          "description": "Минимальная допустимая глубина пересечения (мм)"
+        }
+      ]
+    },
     "viewsContainers": {
       "bottomPanel": {
         "label": "Пересечения",

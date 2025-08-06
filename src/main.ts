@@ -1,4 +1,4 @@
-
+import { interceptProperties } from './diagnostic/props';
 import { AnnotationHelper, InterceptData } from './annotation';
 import { ConstructionHelper } from './constructions';
 import { IntersectionFinder3 } from './interceptor3';
@@ -88,6 +88,7 @@ export default {
             chanel.info(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
         }
     },
+    ...interceptProperties,
  'intersections_mount': async (ctx: Context): Promise<DefinedView> => {
   
     var elm = ctx.el as HTMLElement;
