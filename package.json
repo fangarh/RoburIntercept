@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/albatros/schema.json",
-  "name": "ru.topomatic.example",
+  "name": "ru.topomatic.intercept",
   "displayName": "Тестовое приложение Topomatic 360",
   "description": "Тестовое приложение демонстрирует возможность создания пользовательских плагинов, позволяющих расширять базовую функциональность Topomatic 360 за счёт новых функций",
   "private": true,
@@ -30,11 +30,12 @@
       "intercept":{
         "app":"wdx",
         "description":"Поиск пересечений",
-        "title":"Поиск пересечений"
+        "title":"Поиск пересечений",
+        "cmd": "interceptRuleCmd"
       }
     },
     "properties": {
-      "interceptRule": [
+      "intercept": [
         {
           "cmd": "property:firstConstruction",
           "label": "Первая конструкция",

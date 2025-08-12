@@ -1,15 +1,23 @@
-import {
-  DiagnosticRule,
-  Diagnostic,
-  DiagnosticSeverity,
-  Context,
-  DwgModel3d,
-  Drawing
-} from 'albatros';
+
 
 import { ConstructionHelper } from './../constructions';
 import { IntersectionFinder3 } from './../interceptor3';
 
+declare interface LayerDiagnostic extends Diagnostic {
+    ctx: Context;
+    layer: DwgLayer;
+}
+
+function activateDiagnostic(diagnostic: Diagnostic) {
+    const ld = diagnostic as LayerDiagnostic;
+    ld.ctx.manager.eval('ru.albatros.wdx/wdx:layers:activate', {
+        layer: ld.layer,
+    });
+    ld.ctx.manager.broadcast('wdx:onView:layers:select' as Broadcast, {
+        layers: [ld.layer],
+        cadview: ld.ctx.cadview,
+    });
+}
 
 export interface InterceptRuleProps {
   firstConstruction: string;

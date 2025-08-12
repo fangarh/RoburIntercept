@@ -1,4 +1,5 @@
 import { interceptProperties } from './diagnostic/props';
+import { interceptRule } from './diagnostic/interceptRule';
 import { AnnotationHelper, InterceptData } from './annotation';
 import { ConstructionHelper } from './constructions';
 import { IntersectionFinder3 } from './interceptor3';
@@ -89,6 +90,9 @@ export default {
         }
     },
     ...interceptProperties,
+    interceptRuleCmd(ctx: Context): DiagnosticRule<Rule3d>{
+      return interceptRule
+    },
  'intersections_mount': async (ctx: Context): Promise<DefinedView> => {
   
     var elm = ctx.el as HTMLElement;
