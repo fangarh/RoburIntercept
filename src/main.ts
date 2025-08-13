@@ -1,5 +1,4 @@
-import { interceptProperties } from './diagnostic/props';
-import { interceptRule } from './diagnostic/interceptRule';
+import { interceptRule, InterceptRuleProps } from './diagnostic/interceptRule';
 import { AnnotationHelper, InterceptData } from './annotation';
 import { ConstructionHelper } from './constructions';
 import { IntersectionFinder3 } from './interceptor3';
@@ -89,9 +88,50 @@ export default {
             chanel.info(`${i}:${inter[i].model1.$id} -> ${inter[i].model2.$id} : Глубина пересечения по XZ ${inter[i].length?.projectedDistance}`)
         }
     },
-    ...interceptProperties,
+    'property:minDepth': (e: Context & ManifestPropertyProvider): ObjectPropertyProvider => {
+      return{
+          getProperties(objects: InterceptRuleProps[]) {
+      
+            const field = e.field;
+            if (field === undefined) {
+              return [];
+            }
+            return [
+              {
+                id: `minDepth-${field}`,
+                label: e.label ?? "Минимальная глубина пересечения",
+                description: e.description,
+                value: ()=> { 
+                  
+                  return {
+                  
+                  label: (objects[0] as any)[e.field]?.toString() ?? "",
+                  suffix: "мм",
+                }},
+                editor: () => ({
+                  type: "editbox",
+                  commit: (val:any) => {
+                    const number = parseFloat(val);
+                    for (const object of objects) {
+                      try {
+                        (object as any)[e.field] = number;
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }
+                  },
+                  validate: (val:any) => {
+                    return isNaN(parseFloat(val)) ? e.tr("Введите число") : undefined;
+                  },
+                }),
+              },
+            ];
+          }
+        }
+    },
     interceptRuleCmd(ctx: Context): DiagnosticRule<Rule3d>{
-      return interceptRule
+
+      return interceptRule(ctx)
     },
  'intersections_mount': async (ctx: Context): Promise<DefinedView> => {
   

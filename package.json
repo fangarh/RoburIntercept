@@ -37,13 +37,13 @@
     "properties": {
       "intercept": [
         {
-          "cmd": "property:firstConstruction",
+          "cmd": "ru.albatros.wdx/property:filter",
           "label": "Первая конструкция",
           "field": "firstConstruction",
           "description": "Выбор первой конструкции для сравнения"
         },
         {
-          "cmd": "property:secondConstruction",
+          "cmd": "ru.albatros.wdx/property:filter",
           "label": "Вторая конструкция",
           "field": "secondConstruction",
           "description": "Выбор второй конструкции для сравнения"
