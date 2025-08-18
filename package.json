@@ -55,43 +55,7 @@
           "description": "Минимальная допустимая глубина пересечения (мм)"
         }
       ]
-    },
-    "viewsContainers": {
-      "bottomPanel": {
-        "label": "Пересечения",
-        "container": "bottom"
-      }
-    },
-    "views": {
-      "intersectionsView": {
-        "label": "Результаты",
-        "type": "defined",
-        "container": "bottomPanel",
-        "cmd": "intersections_mount"
-      }
-    },
-    "actions": {
-      "intercept": {
-        "label": "Пересечение полигонов",
-        "cmd": "intercept",
-        "description": "Пересечение выбранны полигонов",
-        "flags": "128"
-      },
-      "intersections_mount": {
-        "label": "Пересечения",
-        "cmd": "intersections_mount"
-      }
-    },
-    "menu": [
-      {
-        "label": "Пересечение",
-        "submenu": [
-          {
-            "action": "intercept"
-          }
-        ]
-      }
-    ]
+    }    
   },
   "dependencies": {
     "vue": "^3.5.13"
