@@ -1,3 +1,9 @@
+/** 
+ * ConstructionType — класс/обёртка уровня приложения.
+ * Ответственность: инкапсулировать сценарии, сохранять состояние, предоставлять методы высокого уровня.
+  * @throws Ошибка валидации входных данных или несовместимый тип фигуры
+ */
+
 export class ConstructionType {
   constructor(
     public id: string,
@@ -5,6 +11,11 @@ export class ConstructionType {
   ) {}
 }
 
+/** 
+ * ConstructionPair — класс/обёртка уровня приложения.
+ * Ответственность: инкапсулировать сценарии, сохранять состояние, предоставлять методы высокого уровня.
+ * @throws Ошибка валидации входных данных или несовместимый тип фигуры
+ */
 export class ConstructionPair  {
    constructor(
       public first: ConstructionType,

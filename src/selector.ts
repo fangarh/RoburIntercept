@@ -52,8 +52,7 @@ export class Selector{
                 return [];
             }
             layer.clearSelected();
-            //await layer.selectObject(undefined, true);
-            //await layer.selectObjects( obj => this.isDwgModel3d(obj), true);
+
 
             var obj : any;
 

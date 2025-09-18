@@ -19,6 +19,12 @@ declare interface InterceptAnnotation extends AnnotationSimple{
     ctx:Context;
 }
 
+/** 
+ * AnnotationHelper — класс/обёртка уровня приложения.
+ * Ответственность: инкапсулировать сценарии, сохранять состояние, предоставлять методы высокого уровня.
+  * @throws Ошибка валидации входных данных или несовместимый тип фигуры
+ */
+
 export class AnnotationHelper{
     private interceptions: InterceptData [];
     private context: Context;
@@ -35,8 +41,6 @@ export class AnnotationHelper{
     public async setAnnotations(){
         for(var i = 0; i < this.interceptions.length; i ++){
             const intercept = this.interceptions[i];
-            //const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intercept.interception);
-            //const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
 
             const processor = new LineSegmentProcessor(intercept.interception);
             const result = processor.findCenterOrNearestPoint();
@@ -50,8 +54,6 @@ export class AnnotationHelper{
                 ctx: this.context,
                 dynamicPaint : this.dynamicPaint,
                 activateCommand: (ann : AnnotationBase)=>{ 
-                    //const position = annotation.position;
-                    //this.context.cadview?.camera.focus(position, undefined);
                     this.context.cadview?.layer.clearSelected()
                     
                      this.context.cadview?.layer.selectObjects((obj)=>{
@@ -65,8 +67,6 @@ export class AnnotationHelper{
  
                 }
             };
-            //intercept.annot = annotation;
-
             const layer = this.context.cadview?.annotations.standard!; 
             layer.add(annotation);
 

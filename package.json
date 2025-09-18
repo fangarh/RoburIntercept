@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/albatros/schema.json",
   "name": "ru.topomatic.intercept",
-  "displayName": "Тестовое приложение Topomatic 360",
-  "description": "Тестовое приложение демонстрирует возможность создания пользовательских плагинов, позволяющих расширять базовую функциональность Topomatic 360 за счёт новых функций",
+  "displayName": "Поиск пересечений объектов Topomatic 360",
+  "description": "Плагин осуществляет поиск пересечений объектов выбранных с помощью двцх фильтров",
   "private": true,
   "version": "0.0.1",
   "main": "src/main.ts",
@@ -47,12 +47,6 @@
           "label": "Вторая конструкция",
           "field": "secondConstruction",
           "description": "Выбор второй конструкции для сравнения"
-        },
-        {
-          "cmd": "property:minDepth",
-          "label": "Минимальная глубина пересечения",
-          "field": "minDepth",
-          "description": "Минимальная допустимая глубина пересечения (мм)"
         }
       ]
     }    
