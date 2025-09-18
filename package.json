@@ -22,7 +22,7 @@
     "build": "albatros-cli build"
   },
   "devDependencies": {
-    "albatros": "latest",
+    "albatros": "1.3.0",
     "gh-pages": "^6.3.0"
   },
   "albatros": {

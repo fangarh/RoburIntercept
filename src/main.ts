@@ -53,14 +53,10 @@ export default {
         const drawing = app.model as Drawing;
 
         if (!drawing?.layouts?.model) return;
+//drawing.filterLayers( rule.firstConstruction, false) //строгий - только соответствующий, не строгий так-же дочерние
+        const layersFirst = drawing.filterLayers( rule.firstConstruction, false) ;
 
-        const layersFirst = new Set (await ctx.eval('ru.albatros.wdx/property:filter:select', {
-            filter: rule.firstConstruction,
-        }) as DwgLayer[] );
-
-        const layersSecond = new Set (await ctx.eval('ru.albatros.wdx/property:filter:select', {
-            filter: rule.secondConstruction,
-        }) as DwgLayer[] );
+        const layersSecond = drawing.filterLayers( rule.secondConstruction, false) ;
 
         const helper = new ConstructionHelper();
 
@@ -138,9 +134,10 @@ console.log(first, second)
             const modelName = firstLayer.layer?.modelName ?? 'default';
             let list = messages[modelName];
             if (!list) messages[modelName] = list = [];
-
+console.log(result)
+if(result !== undefined)
             list.push({
-              message: ctx.tr(`Пересечение между "${firstLayer.layer?.name}/${firstLayer.name}" и "${secondLayer.layer?.name}/${secondLayer.name}`),
+              message: ctx.tr(`Пересечение между "${firstLayer.layer?.name}/${firstLayer.name}" и "${secondLayer.layer?.name}/${secondLayer.name}`), /// подстановка через фигурные скобки
               severity: DiagnosticSeverity.Warning,
               tooltip: ctx.tr('Найдено перпесечение'),
               source: `${firstLayer.layer?.name} -> ${secondLayer.layer?.name}`,
