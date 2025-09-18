@@ -1,16 +1,16 @@
 import { ConstructionHelper } from './constructions';
-import { IntersectionFinder3 } from './interceptor3';
-
+import { IntersectionFinder } from './interceptor';
 import { DiagnosticSeverity, DwgType } from 'albatros/enums';
 
 declare interface LayerDiagnostic extends Diagnostic {
     ctx: Context;
     layer: DwgLayer;
+    layer2: DwgLayer;
 }
+
 declare interface InterceptRuleProps {
   firstConstruction: string;
   secondConstruction: string;
-  minDepth: number;
 }
 
 
@@ -20,99 +20,74 @@ function activateDiagnostic(diagnostic: Diagnostic) {
         layer: ld.layer,
     });
     ld.ctx.manager.broadcast('wdx:onView:layers:select' as Broadcast, {
-        layers: [ld.layer],
+        layers: [ld.layer, ld.layer2],
         cadview: ld.ctx.cadview,
     });
 }
 
+function searchLayer(layers:Set<DwgLayer>, l: DwgLayer): boolean{
+  let curL : DwgLayer | undefined;
+  curL = l;
+  do{
+    if(layers.has(curL))
+      return true;
+    
+    curL = curL.layer
+  }while(curL != undefined)
+
+  return false;
+}
 
 export default {
-  'property:minDepth': (e: Context & ManifestPropertyProvider): ObjectPropertyProvider => {
-    return{
-        getProperties(objects: InterceptRuleProps[]) {
-    
-          const field = e.field!;
-          if (field === undefined) {
-            return [];
-          }
-          return [
-            {
-              id: `minDepth-${field}`,
-              label: e.label ?? "Минимальная глубина пересечения",
-              description: e.description,
-              value: ()=> { 
-                
-                return {
-                
-                label: (objects[0] as any)[field]?.toString() ?? "",
-                suffix: "мм",
-              }},
-              editor: () => ({
-                type: "editbox",
-                commit: (val:any) => {
-                  const number = parseFloat(val);
-                  for (const object of objects) {
-                    try {
-                      (object as any)[field] = number;
-                    } catch (e) {
-                      console.error(e);
-                    }
-                  }
-                },
-                validate: (val:any) => {
-                  return isNaN(parseFloat(val)) ? e.tr("Введите число") : undefined;
-                },
-              }),
-            },
-          ];
-        }
-      }
-  },
   'interceptRuleCmd' : (ctx:Context): DiagnosticRule<InterceptRuleProps> =>  {
     return {
       async createRule() {
         return {
           firstConstruction: '',
-          secondConstruction: '',
-          minDepth: 5,
+          secondConstruction: ''
         };
       },
 
-      async execute(app, rule, diagnostics, _progress) {
+      async execute(app, rule, diagnostics, _progress) {     
         diagnostics.clear()
         const drawing = app.model as Drawing;
 
         if (!drawing?.layouts?.model) return;
 
-        const layersFirst = new Set(await ctx.eval('ru.albatros.wdx/property:filter:select', {
+        const layersFirst = new Set (await ctx.eval('ru.albatros.wdx/property:filter:select', {
             filter: rule.firstConstruction,
-        }) as DwgLayer[]);
+        }) as DwgLayer[] );
 
-        const layersSecond = new Set(await ctx.eval('ru.albatros.wdx/property:filter:select', {
+        const layersSecond = new Set (await ctx.eval('ru.albatros.wdx/property:filter:select', {
             filter: rule.secondConstruction,
-        }) as DwgLayer[]);
+        }) as DwgLayer[] );
 
         const helper = new ConstructionHelper();
 
         const allModels: DwgModel3d[] = [];
-        drawing.layouts.model.walk(obj => {
-          if (obj.type === 'g') {
+        drawing.layouts.model.walk( obj => {
+          if (obj.type === DwgType.model3d) {
             allModels.push(obj as DwgModel3d);
           }
           return false;
-        });
+        } );
 
         helper.BuildConstructionTypes(allModels);
         const first = new Map<DwgLayer, DwgModel3d>();
         const second = new Map<DwgLayer, DwgModel3d>();
+console.log(layersFirst, layersSecond)
 
         drawing.layouts.model?.walk(e => {
+          // Рекурсивно подняться по слоям 
+            console.log(e.layer?.$id)
+            //Везде использовать Model3d
             if ((e.type === DwgType.model3d) && (e.layer !== undefined)) {
-                if (layersFirst.has(e.layer)) {                
+                if (searchLayer(layersFirst, e.layer)) {     
                     const model = (e as DwgModel3d);
+
                     first.set(e.layer, model);
-                }
-                if (layersSecond.has(e.layer)) {                
+                } 
+                if (searchLayer(layersSecond, e.layer)) {  
                     const model = (e as DwgModel3d);
                     second.set(e.layer, model);
                 }
@@ -134,18 +109,20 @@ export default {
         var total = first.size * second.size;
         var percent = 0
         var old_percent = 0
-        const finder = new IntersectionFinder3(ctx);
+        const finder = new IntersectionFinder(ctx);
         const lengthNormal: vec3 = [0, 1, 0];
         const messages: Record<string, Diagnostic[]> = {};
+console.log(first, second)
 
         for (const [firstLayer, firstModel] of first.entries()) {
           for (const [secondLayer, secondModel] of second.entries()) {            
+            console.log("Searching ...")
             if (firstModel.$path === secondModel.$path) continue;
-
+// убрать
             if (!helper.hasConstructionPairFromModels(firstModel, secondModel)) continue;
 
             const result = await finder.findIntersection2(firstModel, secondModel, helper, lengthNormal);
-            const depth = result?.length?.projectedDistance ?? 0;
+
             
             if(old_percent  + 1 < Math.ceil(percent / total * 100.)){
                 old_percent =  Math.ceil(percent / total * 100.)
@@ -157,21 +134,21 @@ export default {
 
             _progress.percents = Math.ceil(percent / total * 100.);
             percent ++
-            if (depth >= rule.minDepth) {
-              const modelName = firstLayer.layer?.modelName ?? 'default';
-              let list = messages[modelName];
-              if (!list) messages[modelName] = list = [];
+            
+            const modelName = firstLayer.layer?.modelName ?? 'default';
+            let list = messages[modelName];
+            if (!list) messages[modelName] = list = [];
 
-              list.push({
-                message: ctx.tr('Пересечение между "{0}" и "{1}" глубиной {2} мм', firstModel.$id ?? 'obj1', secondModel.$id ?? 'obj2', depth.toFixed(2)),
-                severity: DiagnosticSeverity.Warning,
-                tooltip: ctx.tr('Глубина пересечения превышает минимальную'),
-                source: `${firstLayer.layer?.name} -> ${secondLayer.layer?.name}`,
-                ctx,
-                layer: firstLayer,
-                activation: activateDiagnostic
-              });         
-            }
+            list.push({
+              message: ctx.tr(`Пересечение между "${firstLayer.layer?.name}/${firstLayer.name}" и "${secondLayer.layer?.name}/${secondLayer.name}`),
+              severity: DiagnosticSeverity.Warning,
+              tooltip: ctx.tr('Найдено перпесечение'),
+              source: `${firstLayer.layer?.name} -> ${secondLayer.layer?.name}`,
+              ctx,
+              layer: firstLayer,
+              layer2: secondLayer,
+              activation: activateDiagnostic
+            });                     
           }
         }
 
