@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/albatros/schema.json",
   "name": "ru.topomatic.intercept",
-  "displayName": "Поиск пересечений объектов Topomatic 360",
-  "description": "Плагин осуществляет поиск пересечений объектов выбранных с помощью двцх фильтров",
+  "displayName": "Поиск геометрических пересечений",
+  "description": "Плагин осуществляет поиск пересечений объектов выбранных с помощью механизма диагностики",
   "private": true,
   "version": "0.0.1",
   "main": "src/main.ts",
