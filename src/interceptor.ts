@@ -1,12 +1,6 @@
 import { InterceptData, MeshTriangle } from "./helpers";
 
-export class IntersectionFinder {
-    private context: Context;
-
-    constructor(context: Context) {
-        this.context = context;
-    }
-
+export class IntersectionFinder {   
     public async findIntersection(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {
         const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
 
