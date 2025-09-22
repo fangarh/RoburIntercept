@@ -2,9 +2,9 @@
   "$schema": "node_modules/albatros/schema.json",
   "name": "ru.topomatic.intercept",
   "displayName": "Поиск геометрических пересечений",
-  "description": "Плагин осуществляет поиск пересечений объектов выбранных с помощью механизма диагностики",
+  "description": "Плагин осуществляет поиск пересечений объектов выбранных с помощью фильтров",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.1",
   "main": "src/main.ts",
   "author": {
     "name": "ООО НПФ \"Топоматик\"",
@@ -50,8 +50,5 @@
         }
       ]
     }    
-  },
-  "dependencies": {
-    "vue": "^3.5.13"
   }
 }

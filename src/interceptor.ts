@@ -1,63 +1,13 @@
-import { InterceptData, ProjectionLength } from './annotation';
-import { LineSegmentProcessor } from './centroid'
-import { ConstructionHelper } from './constructions';
-type MeshTriangle = { mesh: DwgMesh; triangleIndex: number };
+import { InterceptData, MeshTriangle } from "./helpers";
 
-/** 
- * IntersectionFinder — класс/обёртка уровня приложения.
- * Ответственность: инкапсулировать сценарии, сохранять состояние, предоставлять методы высокого уровня.
- * @throws Ошибка валидации входных данных или несовместимый тип фигуры
- */
 export class IntersectionFinder {
     private context: Context;
-    private editor: DwgEntityEditor;
-    private drawing: Drawing;
 
     constructor(context: Context) {
         this.context = context;
-        this.editor = context.cadview?.layer?.drawing?.layout.drawing?.layouts.model!.editor()!;
-        this.drawing = context.cadview?.layer?.drawing?.layout.drawing!;
     }
 
-    public async findIntersection(model1: DwgModel3d, model2: DwgModel3d, paint: boolean): Promise<boolean> {
-        const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
-
-        if(!box1World) return false;
-
-        const box2World: box3 | undefined = this.getWorldBoundingBox(model2);
-
-        if(!box2World) return false;
-
-        
-
-        const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
-
-        if (!intersectionBoxWorld)  return false;
-
-        const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
-        const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
-
-        const intersectionLines: { a: vec3; b: vec3 }[] = await this.computeTriangleIntersections(
-            model1,
-            model2,
-            candidateTriangles1,
-            candidateTriangles2
-        );        
-        
-        if(intersectionLines.length == 0)
-            return false;
-
-        if(paint){
-            const intersectionGeometry: Geometry3d = this.createGeometryFromIntersectionLines(intersectionLines);
-            const uuidGeometry: UuidGeometry3d = await Math3d.geometry.createUuidGeometry3d(intersectionGeometry);
-            this.addAnnotation(model1, model2, intersectionLines, uuidGeometry, model1.layer?.getx("name") + "\n " + model2.layer?.getx("name") )
-        }
-        return true;
-    }
-
-    public async findIntersection2(model1: DwgModel3d, model2: DwgModel3d, constructionHelper: ConstructionHelper | undefined,  normal: vec3 | undefined = undefined): Promise<InterceptData | undefined> {
-        if (!constructionHelper?.hasConstructionPairFromModels(model1, model2))  return undefined;  
-        
+    public async findIntersection(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {
         const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
 
         if(!box1World) return undefined;
@@ -70,8 +20,6 @@ export class IntersectionFinder {
 
         if (!intersectionBoxWorld)  return undefined;
 
-
-
         const candidateTriangles1: MeshTriangle[] = this.getCandidateTriangles(model1, intersectionBoxWorld);
         const candidateTriangles2: MeshTriangle[] = this.getCandidateTriangles(model2, intersectionBoxWorld);
 
@@ -80,8 +28,7 @@ export class IntersectionFinder {
             model2,
             candidateTriangles1,
             candidateTriangles2
-        );        
-               
+        );                    
         
         if(intersectionLines.length == 0)
             return undefined;
@@ -91,48 +38,9 @@ export class IntersectionFinder {
             interceptionBxo : intersectionBoxWorld,
             model1:model1,
             model2: model2,
-            length: (normal == undefined) ? undefined : this.findMaxDistanceOnPlaneProjection(intersectionLines, normal)
         }
         
         return result;
-    }
-
-    private findMaxDistanceOnPlaneProjection(
-        intersectionLines: { a: vec3; b: vec3 }[],
-        planeNormal: vec3
-    ): ProjectionLength | undefined {
-        const points: vec3[] = [];
-        for (const line of intersectionLines) {
-            points.push(line.a, line.b);
-        }
-
-        if (points.length < 2) return undefined;
-
-        const n = Math3d.vec3.normalize([0, 0, 0], planeNormal);
-
-        // Предвычислим проекции всех точек на плоскость
-        const projectedPoints = points.map(p => {
-            const dot = Math3d.vec3.dot(p, n);
-            const projection = Math3d.vec3.sub([0, 0, 0], p, Math3d.vec3.mul([0, 0, 0], n, dot));
-            return { original: p, projected: projection };
-        });
-
-        let maxDist = -Infinity;
-        let result: { pointA: vec3; pointB: vec3 } | undefined = undefined;
-
-        for (let i = 0; i < projectedPoints.length; i++) {
-            for (let j = i + 1; j < projectedPoints.length; j++) {
-                const pi = projectedPoints[i];
-                const pj = projectedPoints[j];
-                const dist = Math3d.vec3.distance(pi.projected, pj.projected);
-                if (dist > maxDist) {
-                    maxDist = dist;
-                    result = { pointA: pi.original, pointB: pj.original };
-                }
-            }
-        }
-
-        return result && maxDist > 0 ? { ...result, projectedDistance: maxDist } : undefined;
     }
 
     private getWorldBoundingBox(model: DwgModel3d): box3 | undefined{
@@ -235,8 +143,7 @@ export class IntersectionFinder {
                 ];
 
                 const intersection: { a: vec3; b: vec3 } | null = this.intersectTriangles(vertices1World, vertices2World);
-                if (intersection) {
-                    
+                if (intersection) {                    
                     intersectionLines.push(intersection);
                 }
             }
@@ -262,7 +169,6 @@ export class IntersectionFinder {
         ];
     }
 
-
     private intersectTriangles(t1: [vec3, vec3, vec3], t2: [vec3, vec3, vec3]): { a: vec3; b: vec3 } | null {
         var plane1 : plane3 = Math3d.plane3.make3pt(Math3d.plane3.alloc(), t1[0], t1[1], t1[2]); 
         var plane2 : plane3 = Math3d.plane3.make3pt(Math3d.plane3.alloc(), t2[0], t2[1], t2[2]); 
@@ -282,44 +188,6 @@ export class IntersectionFinder {
 
         return null;
     }
-
-    private isValidIntersection(pointA: vec3, pointB: vec3, t1: [vec3, vec3, vec3], t2: [vec3, vec3, vec3]): boolean {
-        const midPoint: vec3 = [0, 0, 0];
-        const dir: vec3 = [0, 0, 0];
-        Math3d.vec3.sub(dir, pointB, pointA);
-        Math3d.vec3.mul(dir, dir, 0.5);
-        Math3d.vec3.add(midPoint, pointA, dir);
-        return (
-            this.isPointInsideTriangle(pointA, t1) && this.isPointInsideTriangle(pointB, t1) &&
-            this.isPointInsideTriangle(pointA, t2) && this.isPointInsideTriangle(pointB, t2) &&
-            this.isPointInsideTriangle(midPoint, t1) && this.isPointInsideTriangle(midPoint, t2)
-        );
-    }
-
-    private findFurthestPoints(points: vec3[]): { pointA: vec3; pointB: vec3 } {
-        let maxDist: number = 0;
-        let pointA: vec3 | null = null;
-        let pointB: vec3 | null = null;
-        for (let i = 0; i < points.length; i++) {
-            for (let j = i + 1; j < points.length; j++) {
-                const dist: number = Math3d.vec3.distance(points[i], points[j]);
-                if (dist > maxDist) {
-                    maxDist = dist;
-                    pointA = points[i];
-                    pointB = points[j];
-                }
-            }
-        }
-        return { pointA: pointA!, pointB: pointB! };
-    }
-
-    private removeDuplicatePoints(points: vec3[]): vec3[] {
-          const epsilon: number = 1e-6;
-          return points.filter((p, i, arr) =>
-              arr.findIndex(q => Math3d.vec3.distance(p, q) < epsilon) === i
-          );
-          return points;
-      }
 
     private getIntersections(triangle: [vec3, vec3, vec3], plane: plane3, otherTriangle: [vec3, vec3, vec3]): vec3[] {
         const intersections: vec3[] = [];
@@ -343,6 +211,13 @@ export class IntersectionFinder {
         return intersections;
     }
 
+    private removeDuplicatePoints(points: vec3[]): vec3[] {
+        const epsilon: number = 1e-6;
+        return points.filter((p, i, arr) =>
+            arr.findIndex(q => Math3d.vec3.distance(p, q) < epsilon) === i
+        );
+    }
+
     private isPointInsideTriangle(p: vec3, t: [vec3, vec3, vec3]): boolean {
         const [a, b, c] = t;
         const v0: vec3 = Math3d.vec3.sub([0, 0, 0], b, a);
@@ -359,56 +234,33 @@ export class IntersectionFinder {
         return u >= 0 && v >= 0 && u + v <= 1;
     }
 
-    private addAnnotation(model1: DwgModel3d, model2: DwgModel3d, intersectionLines: { a: vec3; b: vec3 }[], uuidGeometry: UuidGeometry3d, text: string){
-        if (intersectionLines.length > 0 && uuidGeometry.bounds) {
-
-            const processor = new LineSegmentProcessor(intersectionLines);
-            const result = processor.findCenterOrNearestPoint()
-            
-
-            const annotation: AnnotationInit<AnnotationSimple> = {
-                type: 'simple',
-                position: result,
-                text: text ,
-                attachment: 'center', activateCommand: (ann : AnnotationBase)=>{ 
-                    this.context.cadview?.layer.clearSelected()
-                    this.context.cadview?.layer.selectObjects((obj)=>{
-                       
-                        if( obj.$path == model1.$path || obj.$path == model2.$path){
-                            
-                            return true;
-                        }
-                        return false
-                    }, true)
-
-                    return {};
+    private findFurthestPoints(points: vec3[]): { pointA: vec3; pointB: vec3 } {
+        let maxDist: number = 0;
+        let pointA: vec3 | null = null;
+        let pointB: vec3 | null = null;
+        for (let i = 0; i < points.length; i++) {
+            for (let j = i + 1; j < points.length; j++) {
+                const dist: number = Math3d.vec3.distance(points[i], points[j]);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    pointA = points[i];
+                    pointB = points[j];
                 }
-            };
-            
-            const layer = this.context.cadview?.annotations.standard!; 
-            layer.add(annotation);
-            this.context.cadview?.invalidate(); 
-            
+            }
         }
+        return { pointA: pointA!, pointB: pointB! };
     }
 
-    private createGeometryFromIntersectionLines(lines: { a: vec3; b: vec3 }[]): Geometry3d {
-        const vertices: number[] = [];
-        const indices: number[] = [];
-        let vertexIndex: number = 0;
-
-        for (const line of lines) {
-            vertices.push(line.a[0], line.a[1], line.a[2], line.b[0], line.b[1], line.b[2]);
-            indices.push(vertexIndex, vertexIndex + 1);
-            vertexIndex += 2;
-        }
-
-        const geometry: Geometry3d = {
-            vertices: new Float32Array(vertices),
-            normals: new Float32Array(vertices.length),
-            indices: new Uint32Array(indices),
-        };
-        Math3d.geometry.calculateNormals(geometry);
-        return geometry;
+    private isValidIntersection(pointA: vec3, pointB: vec3, t1: [vec3, vec3, vec3], t2: [vec3, vec3, vec3]): boolean {
+        const midPoint: vec3 = [0, 0, 0];
+        const dir: vec3 = [0, 0, 0];
+        Math3d.vec3.sub(dir, pointB, pointA);
+        Math3d.vec3.mul(dir, dir, 0.5);
+        Math3d.vec3.add(midPoint, pointA, dir);
+        return (
+            this.isPointInsideTriangle(pointA, t1) && this.isPointInsideTriangle(pointB, t1) &&
+            this.isPointInsideTriangle(pointA, t2) && this.isPointInsideTriangle(pointB, t2) &&
+            this.isPointInsideTriangle(midPoint, t1) && this.isPointInsideTriangle(midPoint, t2)
+        );
     }
 }
