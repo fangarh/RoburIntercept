@@ -99,7 +99,7 @@ async function searchInterceptions(firstSet: Map<DwgLayer, DwgModel3d>, secondSe
     }
 }
 
-/// https://360-staging.topomatic.ru?extensionInstallPath=http%3A%2F%2Flocalhost%3A9093
+
 export default{
     'interceptRuleCmd' : (ctx:Context): DiagnosticRule<InterceptRuleProps> => {
         return {
