@@ -9,7 +9,7 @@ export type MeshTriangle = { mesh: DwgMesh; triangleIndex: number };
 
 export interface LayerDiagnostic extends Diagnostic {
     ctx: Context;
-    layer1: DwgLayer;
+    layer1: DwgLayer;    
     layer2: DwgLayer;
 }
 

@@ -8,72 +8,46 @@ function activateDiagnostic(diagnostic: Diagnostic) {
     ld.ctx.manager.eval('ru.albatros.wdx/wdx:layers:activate', {
         layer: ld.layer1,
     });
-
+    
     ld.ctx.manager.broadcast('wdx:onView:layers:select' as Broadcast, {
         layers: [ld.layer1, ld.layer2],
         cadview: ld.ctx.cadview,
     });
 }
 
-function searchFilteredModels(rule: InterceptRuleProps, drawing: Drawing): [Map<DwgLayer, DwgModel3d> | undefined, Map<DwgLayer, DwgModel3d> | undefined] {
-    const first = new Map<DwgLayer, DwgModel3d>();
-    const second = new Map<DwgLayer, DwgModel3d>();
+function searchFilteredModels(rule: InterceptRuleProps, drawing: Drawing): [Array<DwgModel3d>, Array<DwgModel3d>] {
+    const filteredFirst = drawing.filterEntities( rule.firstConstruction, (entity=>entity.type == DwgType.model3d ? true: false), false);
+    const filteredSecond = drawing.filterEntities( rule.secondConstruction, (entity=>entity.type == DwgType.model3d ? true: false), false);
 
-    const layersFirst = drawing.filterLayers( rule.firstConstruction, false);
-    const layersSecond = drawing.filterLayers( rule.secondConstruction, false);
-
-    const allModels: DwgModel3d[] = [];
-    
-    if (!drawing?.layouts?.model) return [undefined, undefined];   
-    
-    drawing.layouts.model.walk( obj => {
-        if (obj.type === DwgType.model3d) {
-            allModels.push(obj as DwgModel3d);
-        }
-        return false;
-    });
-
-    drawing.layouts.model.walk(e => {
-        if ((e.type === DwgType.model3d) && (e.layer !== undefined)) {
-                if (layersFirst.has(e.layer)) {     
-                    const model = (e as DwgModel3d);
-                    first.set(e.layer, model);
-                } 
-
-                if (layersSecond.has(e.layer)) {  
-                    const model = (e as DwgModel3d);
-                    second.set(e.layer, model);
-                }
-            }
-            return false;
-        });
-
-    return [first, second];
+    return [filteredFirst.map(val => val as DwgModel3d), filteredSecond.map(val=> val as DwgModel3d)];
 }
 
-async function searchInterceptions(firstSet: Map<DwgLayer, DwgModel3d>, secondSet: Map<DwgLayer, DwgModel3d>, ctx: Context, diagnostics: DiagnosticCollection, progress: WorkerProgress){
-    var total = firstSet.size * secondSet.size;
+async function searchInterceptions(firstSet: Array<DwgModel3d>, secondSet: Array<DwgModel3d>, ctx: Context, 
+                                   diagnostics: DiagnosticCollection, progress: WorkerProgress){
+    var total = firstSet.length * secondSet.length;
     var percent = 0
     var old_percent = 0
     const finder = new IntersectionFinder();
     const messages: Record<string, Diagnostic[]> = {};
 
-    for (const [firstLayer, firstModel] of firstSet.entries()) {
-        for (const [secondLayer, secondModel] of secondSet.entries()) {    
-            if (firstModel.$path === secondModel.$path) continue;
+    for (const [,firstModel] of firstSet.entries()) {
+        for (const [,secondModel] of secondSet.entries()) {    
+            if(firstModel === secondModel) continue;
 
             const result = await finder.findIntersection(firstModel, secondModel);
-
+            
             if(result !== undefined){
-                const modelName = firstLayer.layer?.modelName ?? 'default';
-                let list = messages[modelName];
-                if (!list) messages[modelName] = list = [];
+                const firstLayer = firstModel.layer!;
+                const secondLayer = secondModel.layer!;
+
+                const messageKey = firstLayer.layer?.modelName ?? 'default';
+                let list = messages[messageKey];
+                if (!list) messages[messageKey] = list = [];
 
                 list.push({
-                    message: ctx.tr(`Пересечение между "${firstLayer.layer?.name}/${firstLayer.name}" и "${secondLayer.layer?.name}/${secondLayer.name}`), /// подстановка через фигурные скобки
-                    severity: DiagnosticSeverity.Warning,
-                    tooltip: ctx.tr('Найдено перпесечение'),
-                    source: `${firstLayer.layer?.name} -> ${secondLayer.layer?.name}`,
+                    message: ctx.tr(`Пересечение объектов`), 
+                    severity: DiagnosticSeverity.Warning,                    
+                    source: `${firstLayer.layer?.name}/${firstLayer.name} -> ${secondLayer.layer?.name}/${secondLayer.name}`,
                     ctx,
                     layer1: firstLayer,
                     layer2: secondLayer,
@@ -112,7 +86,6 @@ export default{
             async execute(app, rule, diagnostics, _progress) {
                 diagnostics.clear();
                 const drawing = app.model as Drawing;
-
                 const [first, second] = searchFilteredModels(rule, drawing);
 
                 if (!first || !second) {

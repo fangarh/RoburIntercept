@@ -1,12 +1,16 @@
 import { InterceptData, MeshTriangle } from "./helpers";
 
 export class IntersectionFinder {   
-    public async findIntersection(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {
-        const box1World: box3 | undefined = this.getWorldBoundingBox(model1);
+    private epsilon: number = 1e-6;
+    
+    public async findIntersection(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {        
+        var box1World: box3 = Math3d.box3.alloc();
+        model1.viewBounds(box1World);
 
         if(!box1World) return undefined;
-
-        const box2World: box3 | undefined = this.getWorldBoundingBox(model2);
+       
+        var box2World: box3 = Math3d.box3.alloc();
+        model2.viewBounds(box2World);
 
         if(!box2World) return undefined;
 
@@ -37,48 +41,23 @@ export class IntersectionFinder {
         return result;
     }
 
-    private getWorldBoundingBox(model: DwgModel3d): box3 | undefined{
-        const box: box3 = Math3d.box3.alloc();
-        let initialized: boolean = false;
+    private computeIntersectionBox(firstBox: box3, secondBox: box3): box3 | undefined {
+        const ax = firstBox[0], ay = firstBox[1], az = firstBox[2], ax1 = firstBox[3], ay1 = firstBox[4], az1 = firstBox[5];
+        const bx = secondBox[0], by = secondBox[1], bz = secondBox[2], bx1 = secondBox[3], by1 = secondBox[4], bz1 = secondBox[5];
 
-        if(model.meshes == undefined){
-            return undefined;  
-        }
+        const minX = ax > bx ? ax : bx;
+        const maxX = ax1 < bx1 ? ax1 : bx1;
+        if (maxX - minX <= this.epsilon) return undefined; 
+        
+        const minY = ay > by ? ay : by;
+        const maxY = ay1 < by1 ? ay1 : by1;
+        if (maxY - minY <= this.epsilon) return undefined;
 
-        for (const mesh of Object.values(model.meshes)) {
-            const geometry: DwgGeometry3d | undefined = mesh.geometry;
-            if (geometry) {
-                const localBounds: box3 = geometry.bounds;
-                const worldBounds: box3 = Math3d.box3.transformed(Math3d.box3.alloc(), localBounds, model.matrix);
+        const minZ = az > bz ? az : bz;
+        const maxZ = az1 < bz1 ? az1 : bz1;
+        if (maxZ - minZ <= this.epsilon) return undefined;
 
-                if (!initialized) {
-                    Math3d.box3.dup(box, worldBounds);
-                    initialized = true;
-                } else {
-                    Math3d.box3.addBox(box, worldBounds);
-                }
-            }
-        }
-
-        if (!initialized) {
-            return undefined;  
-        }
-        return box;
-    }
-
-    private computeIntersectionBox(box1: box3, box2: box3): box3 | undefined {
-        const minX: number = Math.max(box1[0], box2[0]);
-        const minY: number = Math.max(box1[1], box2[1]);
-        const minZ: number = Math.max(box1[2], box2[2]);
-        const maxX: number = Math.min(box1[3], box2[3]);
-        const maxY: number = Math.min(box1[4], box2[4]);
-        const maxZ: number = Math.min(box1[5], box2[5]);
-
-        if (minX < maxX && minY < maxY && minZ < maxZ) {
-            return [minX, minY, minZ, maxX, maxY, maxZ];
-        }
-
-        return undefined;
+        return [minX, minY, minZ, maxX, maxY, maxZ];
     }
 
     private getCandidateTriangles(model: DwgModel3d, intersectionBoxWorld: box3): MeshTriangle[] {
@@ -206,9 +185,8 @@ export class IntersectionFinder {
     }
 
     private removeDuplicatePoints(points: vec3[]): vec3[] {
-        const epsilon: number = 1e-6;
         return points.filter((p, i, arr) =>
-            arr.findIndex(q => Math3d.vec3.distance(p, q) < epsilon) === i
+            arr.findIndex(q => Math3d.vec3.distance(p, q) < this.epsilon) === i
         );
     }
 
