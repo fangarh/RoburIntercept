@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/albatros/schema.json",
-  "name": "ru.topomatic.intercept",
+  "name": "ru.topomatic.intersection",
   "displayName": "Геометрические коллизии",
   "description": "Плагин для поиска геометрических пересечений элементов",
   "private": true,
