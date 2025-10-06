@@ -1,9 +1,21 @@
 import { DiagnosticSeverity, DwgType } from 'albatros/enums';
-import {InterceptRuleProps, LayerDiagnostic} from './helpers'
+import {InterceptRuleProps, LayerDiagnostic, InterceptAnnotation} from './helpers'
 import { IntersectionFinder } from './interceptor';
 
-function activateDiagnostic(diagnostic: Diagnostic) {
+var annotation : AnnotationInit<InterceptAnnotation>|undefined = undefined;
+const annotationId = "ru.topomatic.intersection.annotation.intersection_annotation";
+
+
+function activateDiagnostic(diagnostic: Diagnostic) {    
     const ld = diagnostic as LayerDiagnostic;
+    var annot = ld.ctx.cadview?.annotations.standard;
+        console.log(annot, annotation, ld.model1)
+    if(annot != undefined && annotation != undefined && ld.model1 != undefined ){
+        annotation.model = ld.model1
+        annot.visible = true;     
+
+        console.log("We try")
+    }
 
     ld.ctx.manager.eval('ru.albatros.wdx/wdx:layers:activate', {
         layer: ld.layer1,
@@ -51,6 +63,7 @@ async function searchInterceptions(firstSet: Array<DwgModel3d>, secondSet: Array
                     ctx,
                     layer1: firstLayer,
                     layer2: secondLayer,
+                    model1: firstModel,
                     activation: activateDiagnostic
                 });
             }
@@ -73,6 +86,39 @@ async function searchInterceptions(firstSet: Array<DwgModel3d>, secondSet: Array
     }
 }
 
+function dynamicPaint(annotation: Annotation | any, dc: DeviceContext, camera: Camera, active: boolean){
+    console.log("We try 2")
+    const intAnn = annotation as InterceptAnnotation;       
+    const model1 = intAnn.model;     
+    if(model1 == undefined)
+        return;
+    
+    for (const mesh of Object.values(model1.meshes)){          
+        if(mesh.geometry){
+            dc.mesh(mesh.geometry)
+        }
+    }
+
+    dc.rasterizer.flush();            
+}
+
+function prepareAnnotation(context: Context ){
+    if(annotation === undefined){
+        annotation = {
+                id:  annotationId,
+                position : [0,0,0],
+                model : undefined,
+                type: 'simple',               
+                attachment: 'center', 
+                ctx: context,
+                dynamicPaint : dynamicPaint,                
+            };
+        const layer = context.cadview?.annotations.standard!; 
+        layer.add(annotation);
+
+    }
+}
+
 /// https://360-staging.topomatic.ru?extensionInstallPath=http%3A%2F%2Flocalhost%3A9091
 export default{
     'interceptRuleCmd' : (ctx:Context): DiagnosticRule<InterceptRuleProps> => {
@@ -83,8 +129,10 @@ export default{
                     secondConstruction : ''
                 }
             },
-            async execute(app, rule, diagnostics, _progress) {
+            async execute(app, rule, diagnostics, _progress) {         
+                prepareAnnotation(ctx);       
                 diagnostics.clear();
+
                 const drawing = app.model as Drawing;
                 const [first, second] = searchFilteredModels(rule, drawing);
 
