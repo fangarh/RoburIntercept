@@ -9,9 +9,8 @@ export type MeshTriangle = { mesh: DwgMesh; triangleIndex: number };
 
 export interface LayerDiagnostic extends Diagnostic {
     ctx: Context;
-    layer1: DwgLayer;    
-    layer2: DwgLayer;
-    model1 : DwgModel3d;
+    model1 : DwgModel3d | undefined;
+    model2 : DwgModel3d | undefined;
 }
 
 export interface InterceptAnnotation extends AnnotationSimple{
