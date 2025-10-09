@@ -3,30 +3,48 @@ import {InterceptRuleProps, LayerDiagnostic, InterceptAnnotation} from './helper
 import { IntersectionFinder } from './interceptor';
 
 function dynamicPaint(annotation: Annotation | any, dc: DeviceContext, camera: Camera, active: boolean){
-    console.log("1")
     const intAnn = annotation as InterceptAnnotation;       
     const model1 = intAnn.model;     
     if(model1 == undefined)
         return;
-
-    console.log("1")
-
-    dc.color = 1;
-    for (const mesh of Object.values(model1.meshes)){          
-        if(mesh.geometry){
-            dc.mesh(mesh.geometry)
+    
+    const matrix = model1.matrix;
+    const rasterizer = dc.rasterizer;
+    dc.pushMatrix();
+    dc.multMatrix(matrix);
+    for (const id in model1.meshes) {
+        const mesh = model1.meshes[id];
+        const geometry = mesh.geometry;
+        if (geometry) {
+            rasterizer.material = mesh.material?.material;
+            dc.mesh(geometry);
+        } else {
+            console.warn('geometry is not defined');
         }
     }
-
-    dc.rasterizer.flush();            
+    dc.popMatrix();
 }
+
+function getBoxCenter(box: box3): [number, number, number] {
+  const [x1, y1, z1, x2, y2, z2] = box;
+  
+  const centerX = (x1 + x2) / 2;
+  const centerY = (y1 + y2) / 2;
+  const centerZ = (z1 + z2) / 2;
+  
+  return [centerX, centerY, centerZ];
+}
+
 
 function prepareAnnotation(context: Context, layer : AnnotationLayer, model : DwgModel3d ){
     layer.clear();
+    var box: box3 = Math3d.box3.alloc();
+    model.viewBounds(box);
+
     const annotationId = "ru.topomatic.intersection.annotation.intersection_annotation";
     const annotation : InterceptAnnotation = {
             id:  annotationId,
-            position : model.normal,
+            position : getBoxCenter(box),
             model : model,
             type: 'simple',               
             attachment: 'center', 
@@ -48,8 +66,7 @@ function activateDiagnostic(diagnostic: Diagnostic) {
         
     
     if(ld.model1 == undefined || ld.model2 == undefined) return;
-
-    prepareAnnotation(ld.ctx, layer!, ld.model1);
+   
     
     console.log(layer)
 
@@ -58,10 +75,10 @@ function activateDiagnostic(diagnostic: Diagnostic) {
     });
     
     ld.ctx.manager.broadcast('wdx:onView:layers:select' as Broadcast, {
-        layers: [ld.model1.layer!, ld.model2.layer],
+        layers: [ ld.model2.layer],
         cadview: ld.ctx.cadview,
     });
-
+    prepareAnnotation(ld.ctx, layer!, ld.model1);
     ld.ctx.cadview?.invalidate(true);
 }
 
