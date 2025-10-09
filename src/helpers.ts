@@ -15,7 +15,7 @@ export interface LayerDiagnostic extends Diagnostic {
 
 export interface InterceptAnnotation extends AnnotationSimple{
     model: DwgModel3d | undefined;
-    ctx:Context;
+    ctx:Context;    
 }
 
 export interface InterceptRuleProps {

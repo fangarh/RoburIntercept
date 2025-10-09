@@ -2,7 +2,7 @@ import { InterceptData, MeshTriangle } from "./helpers";
 
 export class IntersectionFinder {   
     private epsilon: number = 1e-6;
-    
+
     public async findIntersection(model1: DwgModel3d, model2: DwgModel3d): Promise<InterceptData | undefined> {        
         var box1World: box3 = Math3d.box3.alloc();
         model1.viewBounds(box1World);
@@ -14,7 +14,7 @@ export class IntersectionFinder {
 
         if(!box2World) return undefined;
 
-        const intersectionBoxWorld: box3 | undefined = this.computeIntersectionBox(box1World, box2World);
+        const intersectionBoxWorld: box3 | undefined = this.intersectBoxes(box1World, box2World);
 
         if (!intersectionBoxWorld)  return undefined;
 
@@ -41,23 +41,21 @@ export class IntersectionFinder {
         return result;
     }
 
-    private computeIntersectionBox(firstBox: box3, secondBox: box3): box3 | undefined {
-        const ax = firstBox[0], ay = firstBox[1], az = firstBox[2], ax1 = firstBox[3], ay1 = firstBox[4], az1 = firstBox[5];
-        const bx = secondBox[0], by = secondBox[1], bz = secondBox[2], bx1 = secondBox[3], by1 = secondBox[4], bz1 = secondBox[5];
+    private intersectBoxes(a: box3, b: box3): box3 | undefined {
+    const xMin = Math.max(a[0], b[0]);
+    const yMin = Math.max(a[1], b[1]);
+    const zMin = Math.max(a[2], b[2]);
 
-        const minX = ax > bx ? ax : bx;
-        const maxX = ax1 < bx1 ? ax1 : bx1;
-        if (maxX - minX <= this.epsilon) return undefined; 
-        
-        const minY = ay > by ? ay : by;
-        const maxY = ay1 < by1 ? ay1 : by1;
-        if (maxY - minY <= this.epsilon) return undefined;
+    const xMax = Math.min(a[3], b[3]);
+    const yMax = Math.min(a[4], b[4]);
+    const zMax = Math.min(a[5], b[5]);
 
-        const minZ = az > bz ? az : bz;
-        const maxZ = az1 < bz1 ? az1 : bz1;
-        if (maxZ - minZ <= this.epsilon) return undefined;
+    // Проверяем, что пересечение не пустое (включая вырожденные случаи, где min === max)
+    if (xMin <= xMax && yMin <= yMax && zMin <= zMax) {
+        return [xMin, yMin, zMin, xMax, yMax, zMax];
+    }
 
-        return [minX, minY, minZ, maxX, maxY, maxZ];
+    return undefined;
     }
 
     private getCandidateTriangles(model: DwgModel3d, intersectionBoxWorld: box3): MeshTriangle[] {
