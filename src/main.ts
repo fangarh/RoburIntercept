@@ -7,21 +7,20 @@ async function dynamicPaint(annotation: Annotation | any, dc: DeviceContext, cam
     const model1 = intAnn.model;     
     if(model1 == undefined)
         return;
-/*
-            const m2 = await Math3d.geometry.createUuidMaterial({ shading: 'Blinn–Phong', diffuse: 8355711, 
-                specular: 12256, ambient: 3070, shininess: 0.6, transparency: 20 });
-    */
+
     const matrix = model1.matrix;
     const rasterizer = dc.rasterizer;
     dc.pushMatrix();
     dc.multMatrix(matrix);
+    
+    dc.color = intAnn.color;
 
     for (const id in model1.meshes) {
         const mesh = model1.meshes[id];
         const geometry = mesh.geometry;
 
         if (geometry) {            
-            //rasterizer.material = m2;
+            
             rasterizer.material = mesh.material?.material;
             dc.mesh(geometry);
         } else {
@@ -42,15 +41,16 @@ function getBoxCenter(box: box3): [number, number, number] {
 }
 
 
-function prepareAnnotation1(context: Context, layer : AnnotationLayer, model : DwgModel3d ){
+function prepareAnnotation(context: Context, layer : AnnotationLayer, model : DwgModel3d, color : number, id : number ){
     var box: box3 = Math3d.box3.alloc();
     model.viewBounds(box);
 
-    const annotationId = "ru.topomatic.intersection.annotation.intersection_annotation_1";
+    const annotationId = "ru.topomatic.intersection.annotation.intersection_annotation_" + id;
     const annotation : InterceptAnnotation = {
             id:  annotationId,
             position : getBoxCenter(box),
             model : model,
+            color:color,
             type: 'simple',               
             attachment: 'center', 
             ctx: context,
@@ -75,14 +75,10 @@ function activateDiagnostic(diagnostic: Diagnostic) {
     ld.ctx.manager.eval('ru.albatros.wdx/wdx:layers:activate', {
         layer: ld.model1.layer,
     });
-    
-    ld.ctx.manager.broadcast('wdx:onView:layers:select' as Broadcast, {
-        layers: [ ld.model2.layer],
-        cadview: ld.ctx.cadview,
-    });
 
     layer?.clear();
-    prepareAnnotation1(ld.ctx, layer!, ld.model1);
+    prepareAnnotation(ld.ctx, layer!, ld.model1, 0xFF00FF00, 1);
+    prepareAnnotation(ld.ctx, layer!, ld.model2, 0xFF0000FF, 2);
     
     ld.ctx.cadview?.invalidate(true);
 }
